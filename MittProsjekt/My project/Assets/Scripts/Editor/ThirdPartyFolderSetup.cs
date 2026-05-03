@@ -1,0 +1,81 @@
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEngine;
+
+// Vi samler alle importerte pakker under ThirdParty så Assets-roten bare har «vårt» innhold — kjør menyen om noe fortsatt ligger feil.
+// Trygt å kjøre flere ganger; flytter bare mapper som ligger rett under Assets/. (PG2202-08)
+public static class ThirdPartyFolderSetup
+{
+    private const string ThirdPartyRoot = "Assets/ThirdParty";
+
+    private static readonly string[] ImportedPackageFolderNames =
+    {
+        "AllSkyFree",
+        "Alstra Infinite",
+        "ArtStore3D",
+        "FSP",
+        "IgniteCoders",
+        "ithappy",
+        "JMO Assets",
+        "Kenney",
+        "Low Poly Weapons VOL.1",
+        "LowPoly_ForestPack",
+        "modular_platformer_unity_package",
+        "Obstacle Pack",
+        "Peaceful Piano - Free Loop Sample Pack",
+        "Polytope Studio",
+        "Proxy Games",
+        "Rose Fantasy World _ Tumblebee\u200b\u200b",
+        "SimpleNaturePack",
+        "SimplePoly City - Low Poly Assets",
+        "SimpleSky",
+        "Supercyan Character Pack Zombie Sample",
+        "Synty",
+        "TextMesh Pro",
+        "TutorialInfo",
+        "VFXPACK_FIRE_WALLCOEUR",
+        "Weapons of Choice FREE - Komposite Sound",
+    };
+
+    [MenuItem("CartoonZombies/Project/Move imported packages to ThirdParty", false, 50)]
+    public static void MoveImportedPackagesToThirdParty()
+    {
+        if (!AssetDatabase.IsValidFolder(ThirdPartyRoot))
+        {
+            string guid = AssetDatabase.CreateFolder("Assets", "ThirdParty");
+            if (string.IsNullOrEmpty(guid))
+            {
+                Debug.LogError("Could not create Assets/ThirdParty folder.");
+                return;
+            }
+        }
+
+        int movedCount = 0;
+        foreach (string folderName in ImportedPackageFolderNames)
+        {
+            string sourcePath = $"Assets/{folderName}";
+            if (!AssetDatabase.IsValidFolder(sourcePath))
+                continue;
+
+            string destPath = $"{ThirdPartyRoot}/{folderName}";
+            if (AssetDatabase.IsValidFolder(destPath))
+            {
+                Debug.LogWarning($"Already exists, skipping: {destPath}");
+                continue;
+            }
+
+            string error = AssetDatabase.MoveAsset(sourcePath, destPath);
+            if (string.IsNullOrEmpty(error))
+            {
+                movedCount++;
+                Debug.Log($"Moved: {sourcePath} -> {destPath}");
+            }
+            else
+                Debug.LogError(error);
+        }
+
+        AssetDatabase.Refresh();
+        Debug.Log($"Done. Moved {movedCount} folder(s); others were already under ThirdParty or missing.");
+    }
+}
+#endif

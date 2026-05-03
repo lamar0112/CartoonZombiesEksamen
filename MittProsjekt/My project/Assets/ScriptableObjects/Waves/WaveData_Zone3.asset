@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce37001c894f45c4aaa9374cdf06c617, type: 3}
+  m_Name: WaveData_Zone3
+  m_EditorClassIdentifier: Assembly-CSharp::WaveData
+  zombieCount: 12
+  spawnInterval: 1
+  zombiePrefab: {fileID: 6930373436760084395, guid: 17b64d2dc8cba954f9b53d844fd22c30, type: 3}
+  zombiePrefabVariants:
+  - {fileID: 8530384378985391033, guid: 3e173ce85222c91478c004ff4c08d2f7, type: 3}
+  - {fileID: 2839917436738017123, guid: f80843238b1437b4db03a0070b9171c5, type: 3}

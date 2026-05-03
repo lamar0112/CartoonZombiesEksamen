@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de7182f4a5b64cf8b6e2910d1a2b3c4d, type: 3}
+  m_Name: GameAudioSettings
+  m_EditorClassIdentifier: Assembly-CSharp::GameAudioSettings
+  menuMusic: {fileID: 8300000, guid: 63f692ad077905943bc788965813c92f, type: 3}
+  cityMusic: {fileID: 8300000, guid: 63f692ad077905943bc788965813c92f, type: 3}
+  beachMusic: {fileID: 8300000, guid: b5378e80e94654a45a26695f5c91a85d, type: 3}
+  menuMusicVolume: 0.8
+  cityMusicVolume: 0.8
+  beachMusicVolume: 0.8
+  sfxGameplayScale: 1
