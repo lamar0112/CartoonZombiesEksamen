@@ -41,6 +41,15 @@ public class PlayerShooting : MonoBehaviour
     /// <summary>Kalles når et skudd faktisk avfyres (ikke tomt magasin-klikk).</summary>
     public event System.Action OnWeaponFired;
 
+    private void Awake()
+    {
+        // Hvis en WeaponPickup finnes i scenen, starter spilleren uten våpen (PG2202-04 collision)
+        // Disabler her i Awake — Start() kjøres ikke før vi re-enabler via WeaponPickup.OnTriggerEnter
+        // Include inactive pick-ups so a disabled prefab still gates shooting correctly.
+        if (FindFirstObjectByType<WeaponPickup>(FindObjectsInactive.Include) != null)
+            enabled = false;
+    }
+
     private void Start()
     {
         currentAmmo = maxAmmo;
@@ -93,7 +102,11 @@ public class PlayerShooting : MonoBehaviour
             ShowHitEffect(hit.point, hit.normal);
             ZombieHealth zombie = hit.collider.GetComponentInParent<ZombieHealth>();
             if (zombie != null)
+            {
                 zombie.TakeDamage(damage);
+                // Vis flytende skadetall over zombie (PG2202-08)
+                DamagePopup.Spawn(damage, hit.point);
+            }
         }
 
         // Auto-reload når tom

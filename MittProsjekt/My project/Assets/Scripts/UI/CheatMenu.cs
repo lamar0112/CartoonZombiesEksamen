@@ -38,17 +38,30 @@ public class CheatMenu : MonoBehaviour
         if (tuning != null)
             noclipSpeed = tuning.noclipSpeed;
 
+        ResolvePlayerReferences();
+    }
+
+    private void ResolvePlayerReferences()
+    {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            playerHealth   = player.GetComponent<PlayerHealth>();
-            playerMovement = player.GetComponent<PlayerMovement>();
-            charController = player.GetComponent<CharacterController>();
-        }
+        if (player == null) return;
+
+        if (playerHealth == null)
+            playerHealth = player.GetComponent<PlayerHealth>();
+        if (playerMovement == null)
+            playerMovement = player.GetComponentInChildren<PlayerMovement>(true);
+        if (charController == null)
+            charController = player.GetComponentInChildren<CharacterController>(true);
     }
 
     private void Update()
     {
+        if (playerMovement == null && charController == null)
+            ResolvePlayerReferences();
+
+        if (noclipActive)
+            HandleNoclipMovement();
+
         if (Input.GetKeyDown(KeyCode.Y))
         {
             isOpen = !isOpen;
@@ -61,8 +74,6 @@ public class CheatMenu : MonoBehaviour
             Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
         }
 
-        if (noclipActive)
-            HandleNoclipMovement();
     }
 
     // OnGUI tegner UI direkte uten Canvas - enklere og mer pålitelig (PG2202 Unity UI)
@@ -122,6 +133,7 @@ public class CheatMenu : MonoBehaviour
 
     public void OnNoclipClicked()
     {
+        ResolvePlayerReferences();
         noclipActive = !noclipActive;
         if (playerMovement != null) playerMovement.enabled = !noclipActive;
         if (charController != null) charController.enabled = !noclipActive;
@@ -160,9 +172,13 @@ public class CheatMenu : MonoBehaviour
     private IEnumerator KillAllZombiesRoutine()
     {
         Time.timeScale = 1f;
-        ZombieHealth[] zombies = Object.FindObjectsByType<ZombieHealth>(FindObjectsSortMode.None);
+        ZombieHealth[] zombies = Object.FindObjectsByType<ZombieHealth>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (ZombieHealth z in zombies)
-            z.TakeDamage(99999);
+        {
+            if (z != null)
+                z.CheatForceKill();
+        }
+
         yield return new WaitForSecondsRealtime(2.6f);
         if (isOpen)
             Time.timeScale = 0f;
@@ -174,19 +190,35 @@ public class CheatMenu : MonoBehaviour
 
     private void HandleNoclipMovement()
     {
-        // Noclip etter testing: lukk menyen med Y — ellers beveger karakter mens GUI er åpen
-        if (isOpen) return;
-        if (Camera.main == null || playerMovement == null) return;
+        if (Camera.main == null) return;
+
+        Transform body = charController != null ? charController.transform
+            : playerMovement != null ? playerMovement.transform : null;
+        if (body == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p == null) return;
+            body = p.transform;
+        }
+
+        Vector3 f = Camera.main.transform.forward;
+        f.y = 0f;
+        if (f.sqrMagnitude > 0.01f) f.Normalize();
+        Vector3 r = Camera.main.transform.right;
+        r.y = 0f;
+        if (r.sqrMagnitude > 0.01f) r.Normalize();
 
         Vector3 move = Vector3.zero;
-        if (Input.GetKey(KeyCode.W))           move += Camera.main.transform.forward;
-        if (Input.GetKey(KeyCode.S))           move -= Camera.main.transform.forward;
-        if (Input.GetKey(KeyCode.A))           move -= Camera.main.transform.right;
-        if (Input.GetKey(KeyCode.D))           move += Camera.main.transform.right;
-        if (Input.GetKey(KeyCode.Space))       move += Vector3.up;
+        if (Input.GetKey(KeyCode.W)) move += f;
+        if (Input.GetKey(KeyCode.S)) move -= f;
+        if (Input.GetKey(KeyCode.A)) move -= r;
+        if (Input.GetKey(KeyCode.D)) move += r;
+        if (Input.GetKey(KeyCode.Space)) move += Vector3.up;
         if (Input.GetKey(KeyCode.LeftControl)) move -= Vector3.up;
 
-        playerMovement.transform.position += move * noclipSpeed * Time.unscaledDeltaTime;
+        float mag = move.magnitude;
+        if (mag < 1e-4f) return;
+        body.position += (move / mag) * (noclipSpeed * Time.unscaledDeltaTime);
     }
 
     // Lager en 1x1 farge-tekstur for GUI-stil bakgrunn

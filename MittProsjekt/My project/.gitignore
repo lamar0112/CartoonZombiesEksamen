@@ -105,6 +105,9 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
+# Unity recovery folder (often orphan metadata; exclude from repo)
+/[Aa]ssets/_Recovery/
+
 # GitHub blokkerer filer >100 MB — behold lokalt, ikke i repo (stor HDR/sky-tekstur)
 /[Aa]ssets/ThirdParty/Proxy Games/Stylized Nature Kit Lite/Misc/HDRI.hdr
 /[Aa]ssets/ThirdParty/Proxy Games/Stylized Nature Kit Lite/Misc/HDRI.hdr.meta

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 // ZombieHealth håndterer skade og død - skiller helse-logikk fra AI-logikk
@@ -29,11 +30,34 @@ public class ZombieHealth : MonoBehaviour
 
     private void Start()
     {
-        // Retter forhåndsplasserte zombier (scene) som ligger i veibanen / under mesh
-        ZombieSnapPositionUtility.SnapAgentToGround(gameObject);
+        // Coroutine gir NavMesh og MeshColliders 2 frames til å initialisere før snap (PG2202-08)
+        StartCoroutine(DelayedSnapToGround());
+    }
+
+    private IEnumerator DelayedSnapToGround()
+    {
+        // NavMesh bake + agent placement often settle a few frames after Instantiate (beach / large scenes).
+        yield return null;
+        yield return null;
+        yield return null;
+        yield return null;
+        if (this != null && gameObject != null && !IsDead)
+            ZombieSnapPositionUtility.SnapAgentToGround(gameObject);
     }
 
     // Telling av levende zombier håndteres av ZombieSpawner (pre-plassert ved Start + umiddelbart ved Instantiate)
+
+    /// <summary>Cheat / debug: dreper umiddelbart, inkl. zombier utenfor kamera eller i «døende» tilstand.</summary>
+    public void CheatForceKill()
+    {
+        if (IsDead)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        TakeDamage(Mathf.Max(maxHealth * 4, 99999));
+    }
 
     // Kalles av PlayerShooting når en kule treffer zombien
     public void TakeDamage(int amount)

@@ -10,6 +10,7 @@ public class EnemyCompassHUD : MonoBehaviour
 
     private ZombieSpawner _spawner;
     private Transform     _player;
+    private Transform     _missionTarget; // satt av MissionManager for å peke mot aktivt oppdrag
 
     private void Start()
     {
@@ -26,17 +27,23 @@ public class EnemyCompassHUD : MonoBehaviour
         if (arrow == null) return;
 
         ResolveRefs();
-        if (_spawner == null || _player == null)
+        if (_player == null)
         {
             SetVisible(false);
             return;
         }
 
+        // Mission arrow must work even if ZombieSpawner is missing or not configured yet.
         Transform target = null;
-        if (_spawner.ZombiesAlive == 1)
-            target = FindOnlyLivingZombie();
-        else if (_spawner.AllWavesDone && _spawner.ZombiesAlive == 0)
-            target = FindExitOrObjectiveTransform();
+        if (_missionTarget != null)
+            target = _missionTarget;
+        else if (_spawner != null)
+        {
+            if (_spawner.ZombiesAlive == 1)
+                target = FindOnlyLivingZombie();
+            else if (_spawner.AllWavesDone && _spawner.ZombiesAlive == 0)
+                target = FindExitOrObjectiveTransform();
+        }
 
         if (target == null)
         {
@@ -105,6 +112,10 @@ public class EnemyCompassHUD : MonoBehaviour
         ZoneTrigger zt = FindFirstObjectByType<ZoneTrigger>();
         return zt != null ? zt.transform : null;
     }
+
+    // Kalles fra MissionManager når et oppdrag med pil er aktivt
+    public void SetMissionTarget(Transform t)   => _missionTarget = t;
+    public void ClearMissionTarget()            => _missionTarget = null;
 
     private void SetVisible(bool on)
     {

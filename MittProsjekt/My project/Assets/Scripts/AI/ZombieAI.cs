@@ -11,7 +11,7 @@ public enum ZombieState { Patrol, Chase, Attack, Dead }
 public class ZombieAI : MonoBehaviour
 {
     [Header("Detection")]
-    [SerializeField] private float detectionRange = 10f; // hvor langt zombien "ser"
+    [SerializeField] private float detectionRange = 22f; // større radius — skogen / åpne flater
     [SerializeField] private float attackRange    = 2f;  // når den begynner å angripe
 
     [Header("Combat")]
@@ -19,7 +19,7 @@ public class ZombieAI : MonoBehaviour
     [SerializeField] private float attackCooldown = 1.5f; // sekunder mellom hvert angrep
 
     [Header("Patrol")]
-    [SerializeField] private float patrolRadius   = 15f;  // maks radius for tilfeldig vandring
+    [SerializeField] private float patrolRadius   = 38f;  // bredere patrulje — ikke bare ved spawn-kant
     [SerializeField] private float patrolWaitTime = 2f;   // pause mellom patruljepunkter
 
     // Private felt - ikke eksponert i Inspector
@@ -31,6 +31,7 @@ public class ZombieAI : MonoBehaviour
     private float       attackTimer;
     private float       patrolTimer;
     private float       groundFixTimer;
+    private float       navRecoverTimer;
     private Vector3     lastDryNavPosition;
 
     private void Awake()
@@ -56,6 +57,7 @@ public class ZombieAI : MonoBehaviour
     {
         if (currentState == ZombieState.Dead) return; // gjør ingenting når død
 
+        TryRecoverAgentToNavMesh();
         UpdateLocomotionAnimator();
         MaybeFixWaterOrBadGround();
 
@@ -71,6 +73,8 @@ public class ZombieAI : MonoBehaviour
     // --- PATROL: vandrer til tilfeldige punkter på NavMesh ---
     private void UpdatePatrol()
     {
+        if (!agent.isOnNavMesh) return;
+
         patrolTimer += Time.deltaTime;
         if (patrolTimer >= patrolWaitTime || !agent.hasPath)
         {
@@ -98,13 +102,18 @@ public class ZombieAI : MonoBehaviour
     {
         if (player == null) { SetState(ZombieState.Patrol); return; }
 
-        agent.SetDestination(player.position); // NavMeshAgent finner vei automatisk
+        if (!agent.isOnNavMesh) return;
+
+        Vector3 goal = player.position;
+        if (NavMesh.SamplePosition(goal, out NavMeshHit hit, 18f, NavMesh.AllAreas))
+            goal = hit.position;
+        agent.SetDestination(goal);
 
         float dist = DistanceToPlayer();
         if (dist <= attackRange)
             SetState(ZombieState.Attack);      // nær nok til å angripe
-        else if (dist > detectionRange * 1.5f)
-            SetState(ZombieState.Patrol);      // mistet spilleren av syne
+        else if (dist > detectionRange * 2.1f)
+            SetState(ZombieState.Patrol);      // mistet spilleren av syne (litt større «minne»)
     }
 
     // --- ATTACK: stopper og angriper ---
@@ -168,6 +177,20 @@ public class ZombieAI : MonoBehaviour
             speedNorm = Mathf.Max(speedNorm, 0.32f);
 
         animator.SetFloat("Speed", speedNorm);
+    }
+
+    private void TryRecoverAgentToNavMesh()
+    {
+        if (agent == null || agent.isOnNavMesh) return;
+        navRecoverTimer += Time.deltaTime;
+        if (navRecoverTimer < 0.2f) return;
+        navRecoverTimer = 0f;
+
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 28f, NavMesh.AllAreas))
+        {
+            agent.Warp(hit.position);
+            ZombieSnapPositionUtility.SnapAgentToGround(gameObject);
+        }
     }
 
     private void MaybeFixWaterOrBadGround()

@@ -8,9 +8,9 @@ public class CarInteraction : MonoBehaviour
     [SerializeField] private CarController carController;
 
     private Transform           player;
-    private MonoBehaviour       playerMovement;  // PlayerMovement — deaktiveres i bil
+    private MonoBehaviour       playerMovement;
     private CharacterController playerController;
-    private MonoBehaviour       playerCamera;    // CameraFollow
+    private Renderer[]          playerRenderers; // skjules mens spilleren sitter i bil
     private bool                playerInCar = false;
 
     private void Awake()
@@ -31,10 +31,10 @@ public class CarInteraction : MonoBehaviour
 
         player = playerObj.transform;
 
-        // Henter våre egne bevegelse-scripts som deaktiveres mens spilleren kjører bil
-        playerMovement    = playerObj.GetComponent<PlayerMovement>();
-        playerController  = playerObj.GetComponent<CharacterController>();
-        playerCamera      = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
+        playerMovement    = playerObj.GetComponentInChildren<PlayerMovement>(true);
+        playerController  = playerObj.GetComponentInChildren<CharacterController>(true);
+        // Samler alle synlige mesh-renderers på spillerkroppen (skjules i bil)
+        playerRenderers   = playerObj.GetComponentsInChildren<Renderer>(true);
     }
 
     private void Update()
@@ -59,9 +59,9 @@ public class CarInteraction : MonoBehaviour
             if (blocked)
                 InteractionHint.Instance.Hide();
             else if (!playerInCar && dist <= interactRange)
-                InteractionHint.Instance.Show("[F] Gå inn i kjørbar bil (WASD når du sitter)");
+                InteractionHint.Instance.Show("[F] Enter car  ·  WASD to drive");
             else if (playerInCar)
-                InteractionHint.Instance.Show("Kjører: WASD / piler  ·  Mellomrom = brems  ·  [F] gå ut");
+                InteractionHint.Instance.Show("Driving: WASD / arrows  ·  Space = brake  ·  [F] exit");
             else
                 InteractionHint.Instance.Hide();
         }
@@ -84,36 +84,49 @@ public class CarInteraction : MonoBehaviour
 
         playerInCar = true;
 
-        // Deaktiverer spillerens bevegelse mens de er i bilen (PG2202-04)
-        if (playerMovement != null) playerMovement.enabled = false;
-        // CharacterController må av — ellers kolliderer «kroppen» med bilens Rigidbody og låser bevegelse
+        if (playerMovement   != null) playerMovement.enabled   = false;
         if (playerController != null) playerController.enabled = false;
 
-        // Kamera følger bilen i stedet for å bli slått av — bruker SetTarget (PG2202-12)
+        // Skjul spillerkroppen — hindrer hode/armer å stikke gjennom biltak (PG2202-04)
+        SetPlayerVisible(false);
+
+        // Kamera: følg bilen med bil-offset (høyere, lengre bak)
         CameraFollow cf = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
-        if (cf != null) cf.SetTarget(transform);
+        if (cf != null) { cf.SetTarget(transform); cf.SetVehicleMode(true); }
 
         carController.IsOccupied = true;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
+
+        // Fullfør bare «nå bilen»-steget — ikke hopp over pistol/bølge (MissionManager-sekvens)
+        MissionManager.Instance?.TryCompleteReachCarMission();
     }
 
     private void ExitCar()
     {
         playerInCar = false;
 
-        // Plasserer spilleren ved siden av bilen og reaktiverer scripts
         player.position = transform.position + transform.right * 2.5f + Vector3.up * 0.5f;
 
-        if (playerMovement != null) playerMovement.enabled = true;
+        if (playerMovement   != null) playerMovement.enabled   = true;
         if (playerController != null) playerController.enabled = true;
 
-        // Kamera tilbake til spilleren (PG2202-12)
+        // Vis spillerkroppen igjen
+        SetPlayerVisible(true);
+
+        // Kamera tilbake til spiller-modus
         CameraFollow cf = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
-        if (cf != null) cf.SetTarget(player);
+        if (cf != null) { cf.SetVehicleMode(false); cf.SetTarget(player); }
 
         if (carController != null)
             carController.IsOccupied = false;
+    }
+
+    private void SetPlayerVisible(bool on)
+    {
+        if (playerRenderers == null) return;
+        foreach (Renderer r in playerRenderers)
+            if (r != null) r.enabled = on;
     }
 
     // Viser interaksjonsradius i Scene-view

@@ -7,7 +7,7 @@ using UnityEngine;
 public class CarController : MonoBehaviour
 {
     [Header("Driving")]
-    [SerializeField] private float motorForce  = 1500f; // fremover-kraft
+    [SerializeField] private float motorForce  = 5600f; // må være sterk nok mot friksjon / små kollisjoner
     [SerializeField] private float brakeForce  = 3000f;
     [SerializeField] private float maxSteer    = 30f;   // maks svingvinkel i grader
     [SerializeField] private float maxSpeed    = 20f;   // maks hastighet m/s
@@ -22,6 +22,7 @@ public class CarController : MonoBehaviour
     private float     steerInput;
     private float     throttleInput;
     private bool      isBraking;
+    private bool      _hasWheels; // sant hvis minst ett hjul er satt i Inspector
 
     // Kan bare kjøres hvis en spiller er inne i bilen
     public bool IsOccupied { get; set; } = false;
@@ -29,8 +30,17 @@ public class CarController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        // Senker tyngdepunktet så bilen ikke velter like lett
+        // Prefab kan være kinematic — da virker ikke AddForce (ingen kjøring fremover)
+        rb.isKinematic = false;
         rb.centerOfMass = new Vector3(0f, -0.5f, 0f);
+        // Tung nok til at zombier med capsule ikke «skyver» bilen som et leketøy
+        rb.mass = Mathf.Max(rb.mass, 3200f);
+        rb.linearDamping = Mathf.Min(rb.linearDamping, 0.12f);
+        rb.angularDamping = Mathf.Max(rb.angularDamping, 2.5f);
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        // Sjekker om hjul-transforms er satt — bilen kjører uansett, bare uten hjulanimasjon
+        _hasWheels = frontLeftWheel != null || frontRightWheel != null
+                  || rearLeftWheel  != null || rearRightWheel  != null;
     }
 
     private void Update()
@@ -39,12 +49,22 @@ public class CarController : MonoBehaviour
         if (Time.timeScale <= 0f) return;
         if (CheatMenu.Instance != null && CheatMenu.Instance.IsCheatMenuOpen) return;
 
-        // Henter input fra tastatur (WASD / piltaster)
-        throttleInput = Input.GetAxis("Vertical");   // W/S eller pil opp/ned
-        steerInput    = Input.GetAxis("Horizontal"); // A/D eller pil venstre/høyre
-        isBraking     = Input.GetKey(KeyCode.Space); // mellomrom for brems
+        // Henter input — fallback på tastatur hvis Input Manager-aksene er døde (Active Input Handling)
+        throttleInput = Input.GetAxis("Vertical");
+        steerInput    = Input.GetAxis("Horizontal");
+        if (Mathf.Abs(throttleInput) < 0.02f)
+        {
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) throttleInput = 1f;
+            if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) throttleInput = -1f;
+        }
+        if (Mathf.Abs(steerInput) < 0.02f)
+        {
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) steerInput = -1f;
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) steerInput = 1f;
+        }
+        isBraking = Input.GetKey(KeyCode.Space);
 
-        RotateWheels();
+        if (_hasWheels) RotateWheels();
     }
 
     // FixedUpdate brukes for fysikk - kjøres med fast intervall uavhengig av framerate
@@ -62,8 +82,8 @@ public class CarController : MonoBehaviour
 
     private void ApplyMotor()
     {
-        // Legger til kraft fremover/bakover via AddRelativeForce (PG2202-04)
-        rb.AddRelativeForce(Vector3.forward * throttleInput * motorForce);
+        if (Mathf.Abs(throttleInput) < 0.01f) return;
+        rb.AddRelativeForce(Vector3.forward * throttleInput * motorForce, ForceMode.Force);
     }
 
     private void ApplySteering()
@@ -78,8 +98,10 @@ public class CarController : MonoBehaviour
 
     private void ApplyBrake()
     {
-        if (isBraking)
-            rb.AddRelativeForce(-rb.linearVelocity.normalized * brakeForce);
+        if (!isBraking) return;
+        Vector3 v = rb.linearVelocity;
+        if (v.sqrMagnitude < 0.05f) return;
+        rb.AddForce(-v.normalized * brakeForce, ForceMode.Force);
     }
 
     private void ClampSpeed()

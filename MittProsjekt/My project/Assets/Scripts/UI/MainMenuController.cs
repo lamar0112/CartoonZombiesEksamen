@@ -32,13 +32,13 @@ public class MainMenuController : MonoBehaviour
 
         if (hs <= 0 && last < 0)
         {
-            highScoreText.text = "Spill en runde for å se rekord her.";
+            highScoreText.text = "Play a run to see your best kill count here.";
             return;
         }
 
         var parts = new System.Collections.Generic.List<string>();
-        if (hs > 0) parts.Add($"Rekord: <color=#FFB347>{hs}</color> drepte");
-        if (last >= 0) parts.Add($"Siste runde: {last} drepte");
+        if (hs > 0) parts.Add($"Best: <color=#FFB347>{hs}</color> kills");
+        if (last >= 0) parts.Add($"Last run: {last} kills");
         highScoreText.richText = true;
         highScoreText.text = string.Join("\n", parts);
     }

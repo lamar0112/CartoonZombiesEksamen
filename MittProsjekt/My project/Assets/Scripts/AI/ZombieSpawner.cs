@@ -1,6 +1,7 @@
 using System.Collections; // trengs for IEnumerator / Coroutine
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 // ZombieSpawner leser WaveData og spawner zombier med jevne mellomrom
 // Bruker Coroutine i stedet for Update() fordi vi vil vente mellom hvert spawn (PG2202-08)
@@ -14,12 +15,25 @@ public class ZombieSpawner : MonoBehaviour
     [SerializeField] private Transform[] spawnPoints;
 
     [Header("Progression")]
-    [Tooltip("Av i by-nivå hvis scene bare skal skifte via ZoneTrigger (parkour ferdig). På i strand hvis siste bølge skal trigge seier.")]
-    [SerializeField] private bool loadNextSceneWhenAllWavesComplete = true;
+    [Tooltip("When true, loads next zone after the last wave is cleared. Keep false on the city level — use ZoneTrigger + missions instead.")]
+    [SerializeField] private bool loadNextSceneWhenAllWavesComplete = false;
+
+    [Tooltip("Når siste WaveData er ferdig, start bølgene på nytt (horde) — bra sammen med oppdrag «drep X zombier».")]
+    [SerializeField] private bool repeatWavesForever = true;
 
     [Header("Scale")]
     [Tooltip("Uniform skala på instansierte zombier (1 = prefab-størrelse). Øk litt hvis de ser for små ut mot spiller.")]
     [SerializeField] private float spawnedZombieUniformScale = 1.22f;
+
+    [Header("Spawn spread")]
+    [Tooltip("Tilfeldig offset rundt hvert spawn-punkt — mer spredning på kartet.")]
+    [SerializeField] private float randomSpawnScatterRadius = 22f;
+
+    [Tooltip("Sjanse (0–1) for å prøve et tilfeldig NavMesh-punkt langt fra spawn — mer zombier «rundt om» på kartet.")]
+    [SerializeField] [Range(0f, 1f)] private float wideMapScatterChance = 0.42f;
+
+    [Tooltip("Radius rundt et tilfeldig valgt spawn-punkt når wide scatter brukes.")]
+    [SerializeField] private float wideMapScatterSampleRadius = 88f;
 
     private int  currentWave  = 0;
     private int  zombiesAlive = 0;
@@ -103,8 +117,10 @@ public class ZombieSpawner : MonoBehaviour
             ? spawnPoints[Random.Range(0, spawnPoints.Length)]
             : transform;
 
+        Vector3 spawnPos = GetScatteredSpawnPosition(spawnPoint);
+
         // Tell med én gang her — Start() på ny instans kjører først senere, ellers henger WaitUntil etter (PG2202-08)
-        GameObject z = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+        GameObject z = Instantiate(prefab, spawnPos, spawnPoint.rotation);
         if (spawnedZombieUniformScale > 0f && !Mathf.Approximately(spawnedZombieUniformScale, 1f))
         {
             Vector3 s = prefab.transform.localScale;
@@ -116,6 +132,61 @@ public class ZombieSpawner : MonoBehaviour
 
         ZombieSnapPositionUtility.SnapAgentToGround(z);
         zombiesAlive++;
+        // NavMeshAgent trenger ofte én–to frames etter Instantiate før Warp sitter riktig
+        StartCoroutine(DeferredSnapZombie(z));
+    }
+
+    private IEnumerator DeferredSnapZombie(GameObject z)
+    {
+        yield return null;
+        yield return null;
+        if (z == null) yield break;
+        ZombieSnapPositionUtility.SnapAgentToGround(z);
+        if (z.TryGetComponent(out NavMeshAgent agent) && agent.enabled && agent.isOnNavMesh)
+        {
+            try { agent.ResetPath(); }
+            catch { /* agent ikke klar */ }
+        }
+    }
+
+    private Vector3 GetScatteredSpawnPosition(Transform spawnPoint)
+    {
+        Vector3 basePos = spawnPoint.position;
+
+        // Bred spredning: tilfeldig punkt på NavMesh innenfor stor radius (krever bakt NavMesh)
+        if (wideMapScatterChance > 0.001f && Random.value < wideMapScatterChance && wideMapScatterSampleRadius > 2f)
+        {
+            Vector3 hub = PickScatterHubPosition(spawnPoint);
+            for (int attempt = 0; attempt < 14; attempt++)
+            {
+                Vector3 jitter = Random.insideUnitSphere * wideMapScatterSampleRadius;
+                jitter.y = 0f;
+                Vector3 candidate = hub + jitter;
+                if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, wideMapScatterSampleRadius + 12f, NavMesh.AllAreas))
+                    return hit.position;
+            }
+        }
+
+        if (randomSpawnScatterRadius <= 0.05f)
+            return basePos;
+
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            Vector3 jitter = Random.insideUnitSphere * randomSpawnScatterRadius;
+            jitter.y = 0f;
+            Vector3 candidate = basePos + jitter;
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, randomSpawnScatterRadius + 8f, NavMesh.AllAreas))
+                return hit.position;
+        }
+
+        return basePos;
+    }
+
+    private Vector3 PickScatterHubPosition(Transform fallback)
+    {
+        if (spawnPoints != null && spawnPoints.Length > 0)
+            return spawnPoints[Random.Range(0, spawnPoints.Length)].position;
+        return fallback.position;
     }
 
     // Kalles av ZombieHealth når en zombie dør
@@ -130,6 +201,14 @@ public class ZombieSpawner : MonoBehaviour
 
         if (currentWave >= waves.Length)
         {
+            if (repeatWavesForever && !loadNextSceneWhenAllWavesComplete)
+            {
+                currentWave = 0;
+                allWavesDone = false;
+                StartCoroutine(WaitAndStartNextWave());
+                return;
+            }
+
             allWavesDone = true;
             if (loadNextSceneWhenAllWavesComplete)
                 GameManager.Instance?.LoadNextZone();
@@ -147,7 +226,8 @@ public class ZombieSpawner : MonoBehaviour
     }
 
     // Public getters for HUD (wave text, etc.)
-    public int  CurrentWave   => currentWave + 1;
+    /// <summary>Visnings-bølge (unngår «Wave 2/1» når siste bølge nettopp ble fullført).</summary>
+    public int CurrentWave => allWavesDone ? Mathf.Max(1, TotalWaves) : Mathf.Clamp(currentWave + 1, 1, Mathf.Max(1, TotalWaves));
     public int  TotalWaves    => waves != null ? waves.Length : 0;
     public bool AllWavesDone  => allWavesDone;
     public int  ZombiesAlive  => zombiesAlive;

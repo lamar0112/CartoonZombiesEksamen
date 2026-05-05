@@ -26,7 +26,20 @@ public static class ZombieSnapPositionUtility
 
             if (WaterDetection.IsWaterCollider(gh.collider)) continue;
 
-            float y = gh.point.y + 0.18f;
+            float y = gh.point.y + 0.42f;
+            if (skipOwnHierarchy != null)
+            {
+                var rend = skipOwnHierarchy.GetComponentInChildren<Renderer>();
+                if (rend != null)
+                {
+                    float pivotToBottom = skipOwnHierarchy.transform.position.y - rend.bounds.min.y;
+                    if (pivotToBottom > 0.02f)
+                        y = Mathf.Max(y, gh.point.y + pivotToBottom + 0.14f);
+                }
+                else
+                    y = gh.point.y + 0.62f;
+            }
+
             worldPos = new Vector3(xzPivot.x, y, xzPivot.z);
             return true;
         }
@@ -45,18 +58,29 @@ public static class ZombieSnapPositionUtility
             NavMesh.SamplePosition(p, out NavMeshHit nmHit, 22f, NavMesh.AllAreas) &&
             !TryFeetOnSolidGround(nmHit.position, z, out placed))
         {
-            placed = new Vector3(nmHit.position.x, nmHit.position.y + 0.18f, nmHit.position.z);
+            placed = new Vector3(nmHit.position.x, nmHit.position.y + 0.28f, nmHit.position.z);
         }
 
         z.transform.position = placed;
         Physics.SyncTransforms();
 
         if (z.TryGetComponent(out NavMeshAgent agent) &&
-            NavMesh.SamplePosition(placed, out NavMeshHit warpHit, 5f, NavMesh.AllAreas))
+            NavMesh.SamplePosition(placed, out NavMeshHit warpHit, 22f, NavMesh.AllAreas))
         {
             Vector3 w = warpHit.position;
-            w.y = Mathf.Max(w.y, placed.y - 0.04f);
+            w.y = Mathf.Max(w.y + 0.12f, placed.y);
             agent.Warp(w);
+            z.transform.position = new Vector3(w.x, w.y, w.z);
+            Physics.SyncTransforms();
+        }
+        else if (z.TryGetComponent(out NavMeshAgent badAgent))
+        {
+            // Keep feet out of the ground even when the navmesh sample fails (common right after bake).
+            badAgent.enabled = false;
+            TryFeetOnSolidGround(z.transform.position, z, out Vector3 grounded);
+            z.transform.position = grounded;
+            Physics.SyncTransforms();
+            badAgent.enabled = true;
         }
     }
 

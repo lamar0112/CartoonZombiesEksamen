@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed        = 5f;
+    [SerializeField] private float sprintSpeed      = 9f;   // Sprint-hastighet med Shift (PG2202-04)
     [SerializeField] private float jumpForce        = 9f;   // Hopp-kraft (PG2202-04)
     [SerializeField] private float gravity          = -20f;
     [SerializeField] private float mouseSensitivity = 2f;
@@ -25,6 +26,7 @@ public class PlayerMovement : MonoBehaviour
     private float   nextVoidRecoverTime;
     private float   voidRecoverBelowYCached;
     private Vector3 lastDryGroundPosition;
+    private float   _shallowWaterTimer;
     private Animator locomotionAnimator;
 
     private void Awake()
@@ -91,6 +93,7 @@ public class PlayerMovement : MonoBehaviour
         if (CheatMenu.Instance != null && CheatMenu.Instance.IsCheatMenuOpen) return;
 
         TryRejectStandingOnWater();
+        MaybeRecoverFromShallowWaterEdge();
 
         // Horisontal rotasjon av spilleren med musa (venstre/høyre)
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
@@ -99,18 +102,21 @@ public class PlayerMovement : MonoBehaviour
         // WASD-bevegelse relativt til spillerens fremoverretning (PG2202-04)
         float h    = Input.GetAxis("Horizontal"); // A/D
         float v    = Input.GetAxis("Vertical");   // W/S
+        // Sprint med venstre Shift — dobbel hastighet (PG2202-04)
+        float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : moveSpeed;
         Vector3 move = transform.right * h + transform.forward * v;
-        move *= moveSpeed * Time.deltaTime;
+        move *= currentSpeed * Time.deltaTime;
         if (ShouldBlockMoveForWater(move))
             move = Vector3.zero;
         cc.Move(move);
 
-        // Hopp (mellomrom) — bare når spilleren er på bakken (PG2202-04)
-        if (cc.isGrounded && Input.GetKeyDown(KeyCode.Space))
+        // Hopp — cc.isGrounded lyver ofte på bratte kanter / mesh-hull; kort raycast under føttene som reserve
+        bool grounded = cc.isGrounded || HasSolidGroundBelowFeet();
+        if (grounded && Input.GetKeyDown(KeyCode.Space))
             verticalVelocity.y = jumpForce;
 
         // Tyngdekraft — CharacterController har ikke innebygd fysikk (PG2202-04)
-        if (cc.isGrounded && verticalVelocity.y < 0f)
+        if (grounded && verticalVelocity.y < 0f)
             verticalVelocity.y = -2f;
         verticalVelocity.y += gravity * Time.deltaTime;
         cc.Move(verticalVelocity * Time.deltaTime);
@@ -129,9 +135,18 @@ public class PlayerMovement : MonoBehaviour
         locomotionAnimator.SetFloat("Hor", h);
         locomotionAnimator.SetFloat("Vert", v);
 
-        Vector3 planar = new Vector3(cc.velocity.x, 0f, cc.velocity.z);
-        locomotionAnimator.SetFloat("State", Mathf.Clamp01(planar.magnitude / Mathf.Max(0.01f, moveSpeed)));
-        locomotionAnimator.SetBool("IsJump", !cc.isGrounded && verticalVelocity.y > 0.35f);
+        Vector3 planar  = new Vector3(cc.velocity.x, 0f, cc.velocity.z);
+        float   topSpeed = Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : moveSpeed;
+        locomotionAnimator.SetFloat("State", Mathf.Clamp01(planar.magnitude / Mathf.Max(0.01f, topSpeed)));
+        bool air = !cc.isGrounded && !HasSolidGroundBelowFeet();
+        locomotionAnimator.SetBool("IsJump", air && verticalVelocity.y > 0.35f);
+    }
+
+    private bool HasSolidGroundBelowFeet()
+    {
+        float probe = Mathf.Clamp(cc.skinWidth + cc.stepOffset + 0.22f, 0.28f, 1.1f);
+        Vector3 o = transform.position + Vector3.up * 0.12f;
+        return Physics.Raycast(o, Vector3.down, probe, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
     }
 
     private void TryRejectStandingOnWater()
@@ -160,6 +175,37 @@ public class PlayerMovement : MonoBehaviour
                 Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
             return false;
         return WaterDetection.IsWaterCollider(hit.collider);
+    }
+
+    /// <summary>Strand: unngå «henger fast» i grunnt vann ved kant — teleporter til siste tørre posisjon.</summary>
+    private void MaybeRecoverFromShallowWaterEdge()
+    {
+        if (SceneManager.GetActiveScene().name != "Level02_StrandSkog") return;
+        if (Time.timeScale <= 0f) return;
+
+        Vector3 from = transform.position + Vector3.up * 0.4f;
+        if (!Physics.Raycast(from, Vector3.down, out RaycastHit hit, 8f,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        {
+            _shallowWaterTimer = 0f;
+            return;
+        }
+
+        if (!WaterDetection.IsWaterCollider(hit.collider))
+        {
+            _shallowWaterTimer = 0f;
+            return;
+        }
+
+        _shallowWaterTimer += Time.deltaTime;
+        if (_shallowWaterTimer < 0.5f) return;
+        _shallowWaterTimer = 0f;
+
+        cc.enabled = false;
+        transform.position = lastDryGroundPosition + Vector3.up * 0.18f;
+        verticalVelocity.y = -2f;
+        Physics.SyncTransforms();
+        cc.enabled = true;
     }
 
     /// <summary>

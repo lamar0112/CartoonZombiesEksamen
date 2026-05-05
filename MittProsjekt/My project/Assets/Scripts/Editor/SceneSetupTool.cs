@@ -14,14 +14,14 @@ using System.Linq;
 public class SceneSetupTool
 {
     private const string MainMenuKeybindHelpText =
-        "WASD / piltaster — beveg\n" +
-        "Mus — se deg rundt\n" +
-        "Venstreklikk — skyt\n" +
+        "WASD / arrows — move\n" +
+        "Mouse — look\n" +
+        "Left click — shoot\n" +
         "R — reload\n" +
-        "Mellomrom — hopp\n" +
+        "Space — jump\n" +
         "ESC — pause\n" +
-        "F — gå inn/ut av bil (nær bil)\n" +
-        "Y — cheat-meny";
+        "F — enter/exit car (when close)\n" +
+        "Y — cheat menu";
 
     // --- LEVEL SCENES (gamle «full setup» med ekstra gulv — bruk Repair-menyen for ferdige kart) ---
 
@@ -992,12 +992,12 @@ public class SceneSetupTool
         RectTransform ctrlPanelRt = ctrlPanel.AddComponent<RectTransform>();
         ctrlPanelRt.anchorMin = Vector2.zero; ctrlPanelRt.anchorMax = Vector2.zero;
         ctrlPanelRt.pivot = Vector2.zero;
-        ctrlPanelRt.anchoredPosition = new Vector2(14, 148);
-        ctrlPanelRt.sizeDelta = new Vector2(620, 44);
+        ctrlPanelRt.anchoredPosition = new Vector2(14, 212);
+        ctrlPanelRt.sizeDelta = new Vector2(560, 40);
         ctrlPanel.AddComponent<Image>().color = new Color(0.06f, 0.07f, 0.12f, 0.82f);
 
         TextMeshProUGUI ctrlTMP = MakeText(ctrlPanel, "ControlHintsText",
-            "WASD = gå  ·  Mus = se  ·  Skyt = venstreklikk  ·  R = reload  ·  ESC = pause  ·  Y = cheat  ·  F = bil",
+            "WASD = gå  ·  Shift = sprint  ·  Mellomrom = hopp  ·  Mus = se  ·  Skyt = klikk  ·  R = reload  ·  ESC = pause  ·  Y = cheat  ·  F = bil",
             14,
             anchor: new Vector2(0, 0), pivot: new Vector2(0, 0),
             pos: new Vector2(14, 10), size: new Vector2(670, 40),
@@ -1009,26 +1009,43 @@ public class SceneSetupTool
         GameObject missionPanel = new GameObject("MissionHintPanel");
         missionPanel.transform.SetParent(canvasObj.transform, false);
         RectTransform missionPanelRt = missionPanel.AddComponent<RectTransform>();
-        missionPanelRt.anchorMin = new Vector2(0.5f, 0f);
-        missionPanelRt.anchorMax = new Vector2(0.5f, 0f);
-        missionPanelRt.pivot = new Vector2(0.5f, 0f);
-        missionPanelRt.anchoredPosition = new Vector2(0, 22);
-        missionPanelRt.sizeDelta = new Vector2(860, 86);
-        missionPanel.AddComponent<Image>().color = new Color(0.05f, 0.06f, 0.1f, 0.78f);
+        missionPanelRt.anchorMin = new Vector2(0f, 1f);
+        missionPanelRt.anchorMax = new Vector2(0f, 1f);
+        missionPanelRt.pivot = new Vector2(0f, 1f);
+        missionPanelRt.anchoredPosition = new Vector2(12f, -12f);
+        missionPanelRt.sizeDelta = new Vector2(440f, 108f);
+        missionPanel.AddComponent<Image>().color = new Color(0.05f, 0.06f, 0.1f, 0.82f);
 
-        TextMeshProUGUI missionTMP = MakeText(missionPanel, "MissionObjectiveText", " ", 17,
-            anchor: new Vector2(0.5f, 0.5f), pivot: new Vector2(0.5f, 0.5f),
-            pos: Vector2.zero, size: new Vector2(820, 78),
-            align: TextAlignmentOptions.Center);
+        TextMeshProUGUI missionTMP = MakeText(missionPanel, "MissionObjectiveText", " ", 18,
+            anchor: new Vector2(0f, 1f), pivot: new Vector2(0f, 1f),
+            pos: new Vector2(12f, -8f), size: new Vector2(420f, 96f),
+            align: TextAlignmentOptions.TopLeft);
         missionTMP.richText = true;
+
+        GameObject goalsPanel = new GameObject("GoalsHintPanel");
+        goalsPanel.transform.SetParent(canvasObj.transform, false);
+        RectTransform goalsRt = goalsPanel.AddComponent<RectTransform>();
+        goalsRt.anchorMin = new Vector2(0.5f, 0f);
+        goalsRt.anchorMax = new Vector2(0.5f, 0f);
+        goalsRt.pivot = new Vector2(0.5f, 0f);
+        goalsRt.anchoredPosition = new Vector2(0f, 118f);
+        goalsRt.sizeDelta = new Vector2(680f, 96f);
+        goalsPanel.AddComponent<Image>().color = new Color(0.04f, 0.05f, 0.09f, 0.72f);
+
+        TextMeshProUGUI goalsTMP = MakeText(goalsPanel, "LevelGoalsText", " ", 15,
+            anchor: new Vector2(0f, 1f), pivot: new Vector2(0f, 1f),
+            pos: new Vector2(10f, -6f), size: new Vector2(660f, 88f),
+            align: TextAlignmentOptions.TopLeft);
+        goalsTMP.richText = true;
+        goalsTMP.lineSpacing = 20f;
 
         GameObject compassRoot = new GameObject("EnemyCompass");
         compassRoot.transform.SetParent(canvasObj.transform, false);
         RectTransform compassRootRt = compassRoot.AddComponent<RectTransform>();
         compassRootRt.anchorMin = compassRootRt.anchorMax = new Vector2(0.5f, 0f);
         compassRootRt.pivot = new Vector2(0.5f, 0f);
-        compassRootRt.anchoredPosition = new Vector2(0f, 228f);
-        compassRootRt.sizeDelta = new Vector2(76f, 76f);
+        compassRootRt.anchoredPosition = new Vector2(0f, 232f);
+        compassRootRt.sizeDelta = new Vector2(88f, 88f);
         CanvasGroup compassCg = compassRoot.AddComponent<CanvasGroup>();
         compassCg.alpha = 0f;
         compassCg.blocksRaycasts = false;
@@ -1041,9 +1058,15 @@ public class SceneSetupTool
         RectTransform arrowRt = arrowGo.AddComponent<RectTransform>();
         arrowRt.anchorMin = arrowRt.anchorMax = new Vector2(0.5f, 0.5f);
         arrowRt.anchoredPosition = Vector2.zero;
-        arrowRt.sizeDelta = new Vector2(28f, 36f);
-        Image arrowImg = arrowGo.AddComponent<Image>();
-        arrowImg.color = new Color(1f, 0.52f, 0.12f, 1f);
+        arrowRt.sizeDelta = new Vector2(48f, 52f);
+        TextMeshProUGUI arrowTmp = arrowGo.AddComponent<TextMeshProUGUI>();
+        arrowTmp.alignment = TextAlignmentOptions.Center;
+        arrowTmp.fontSize = 46;
+        arrowTmp.fontStyle = FontStyles.Bold;
+        arrowTmp.color = new Color(1f, 0.48f, 0.08f, 1f);
+        arrowTmp.text = "\u25B2";
+        arrowTmp.outlineWidth = 0.22f;
+        arrowTmp.outlineColor = new Color32(0, 0, 0, 220);
 
         EnemyCompassHUD compassHud = compassRoot.AddComponent<EnemyCompassHUD>();
         SerializedObject soCompass = new SerializedObject(compassHud);
@@ -1064,7 +1087,7 @@ public class SceneSetupTool
 
         MissionObjectiveHUD moh = canvasObj.AddComponent<MissionObjectiveHUD>();
         SerializedObject soMoh = new SerializedObject(moh);
-        soMoh.FindProperty("objectiveText").objectReferenceValue = missionTMP;
+        soMoh.FindProperty("goalsHelpText").objectReferenceValue = goalsTMP;
         soMoh.ApplyModifiedProperties();
     }
 
@@ -1111,9 +1134,9 @@ public class SceneSetupTool
         rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
 
         CreateTMPText(panel, "PauseTitle", "PAUSE", Vector2.zero, new Vector2(0.5f, 0.7f), new Vector2(0.5f, 0.7f), 48);
-        CreateButton(panel, "ResumeBtn",    "Fortsett",   new Vector2(0, 50),   pm, "Resume");
-        CreateButton(panel, "MainMenuBtn",  "Hovedmeny",  new Vector2(0, -10),  pm, "OnMainMenuClicked");
-        CreateButton(panel, "QuitBtn",      "Avslutt",    new Vector2(0, -70),  pm, "OnQuitClicked");
+        CreateButton(panel, "ResumeBtn",    "Resume",     new Vector2(0, 50),   pm, "Resume");
+        CreateButton(panel, "MainMenuBtn",  "Main menu",  new Vector2(0, -10),  pm, "OnMainMenuClicked");
+        CreateButton(panel, "QuitBtn",      "Quit",       new Vector2(0, -70),  pm, "OnQuitClicked");
 
         panel.SetActive(false);
 
@@ -1146,15 +1169,15 @@ public class SceneSetupTool
         panelRt.sizeDelta        = new Vector2(280, 360);
 
         // Tittel
-        CreateTMPText(panel, "CheatTitle", "CHEAT-MENY  [Y]",
+        CreateTMPText(panel, "CheatTitle", "CHEAT MENU  [Y]",
             new Vector2(0, 150), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), 22);
 
         // Knapper
-        CreateButton(panel, "GodModeBtn",  "Udødelig (toggle)",     new Vector2(0,  90), cm, "OnGodModeClicked");
+        CreateButton(panel, "GodModeBtn",  "God mode (toggle)",     new Vector2(0,  90), cm, "OnGodModeClicked");
         CreateButton(panel, "NoclipBtn",   "Noclip (toggle)",       new Vector2(0,  30), cm, "OnNoclipClicked");
-        CreateButton(panel, "HealBtn",     "Full helse",            new Vector2(0, -30), cm, "OnHealClicked");
-        CreateButton(panel, "KillAllBtn",  "Drep alle zombier",     new Vector2(0, -90), cm, "OnKillAllClicked");
-        CreateButton(panel, "SkipBtn",     "Hopp til neste sone",   new Vector2(0,-150), cm, "OnSkipZoneClicked");
+        CreateButton(panel, "HealBtn",     "Full health",            new Vector2(0, -30), cm, "OnHealClicked");
+        CreateButton(panel, "KillAllBtn",  "Kill all zombies",     new Vector2(0, -90), cm, "OnKillAllClicked");
+        CreateButton(panel, "SkipBtn",     "Skip to next zone",   new Vector2(0,-150), cm, "OnSkipZoneClicked");
 
         panel.SetActive(false);
 
@@ -1210,7 +1233,7 @@ public class SceneSetupTool
 
         string title = scriptType == typeof(MainMenuController) ? "CARTOON ZOMBIES"
                      : scriptType == typeof(GameOverScreen)     ? "GAME OVER"
-                     : "DU VANT!";
+                     : "YOU WON!";
 
         Color titleColor = isGameOver ? new Color(1f, 0.3f, 0.3f, 1f)
                          : isWin      ? new Color(0.4f, 1f, 0.4f, 1f)
@@ -1227,7 +1250,7 @@ public class SceneSetupTool
 
         if (scriptType == typeof(MainMenuController))
         {
-            var hsText = CreateTMPText(canvasObj, "HighScoreText", "Rekord: 0 kills", new Vector2(0, 10), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), 26);
+            var hsText = CreateTMPText(canvasObj, "HighScoreText", "Best: 0 kills", new Vector2(0, 10), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), 26);
             hsText.color = new Color(0.9f, 0.9f, 0.5f, 1f);
             hsText.raycastTarget = false;
             {
@@ -1239,9 +1262,9 @@ public class SceneSetupTool
             so.FindProperty("highScoreText").objectReferenceValue = hsText;
             so.ApplyModifiedProperties();
 
-            CreateButton(canvasObj, "PlayBtn",     "▶  SPILL",       new Vector2(0, -70),  ctrl, "OnPlayClicked");
-            CreateButton(canvasObj, "KeybindsBtn", "Kontroller",      new Vector2(0, -140), ctrl, "OnKeybindsClicked");
-            CreateButton(canvasObj, "QuitBtn",     "Avslutt",         new Vector2(0, -210), ctrl, "OnQuitClicked");
+            CreateButton(canvasObj, "PlayBtn",     "▶  PLAY",        new Vector2(0, -70),  ctrl, "OnPlayClicked");
+            CreateButton(canvasObj, "KeybindsBtn", "Controls",       new Vector2(0, -140), ctrl, "OnKeybindsClicked");
+            CreateButton(canvasObj, "QuitBtn",     "Quit",           new Vector2(0, -210), ctrl, "OnQuitClicked");
 
             // Keybind-panel
             GameObject kbPanel = new GameObject("KeybindPanel");
@@ -1260,9 +1283,9 @@ public class SceneSetupTool
         else if (scriptType == typeof(GameOverScreen))
         {
             var ctrl = canvasObj.GetComponent<GameOverScreen>();
-            var killsTMP = CreateTMPText(canvasObj, "KillsText",    "Du drepte 0 zombier", new Vector2(0, 14),   new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 30);
-            var zoneTMP  = CreateTMPText(canvasObj, "ZoneText",     "Du nådde sone 1",     new Vector2(0, -26),  new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 24);
-            var hsTMP    = CreateTMPText(canvasObj, "HighScoreText","Rekord: 0 kills",      new Vector2(0, -56),  new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 20);
+            var killsTMP = CreateTMPText(canvasObj, "KillsText",    "You got 0 kills", new Vector2(0, 14),   new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 30);
+            var zoneTMP  = CreateTMPText(canvasObj, "ZoneText",     "You reached zone 1",     new Vector2(0, -26),  new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 24);
+            var hsTMP    = CreateTMPText(canvasObj, "HighScoreText","Best: 0 kills",      new Vector2(0, -56),  new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 20);
             killsTMP.color = Color.white;
             zoneTMP.color  = new Color(0.8f, 0.8f, 0.8f, 1f);
             hsTMP.color    = new Color(0.9f, 0.9f, 0.5f, 1f);
@@ -1271,24 +1294,24 @@ public class SceneSetupTool
             so.FindProperty("zoneText").objectReferenceValue      = zoneTMP;
             so.FindProperty("highScoreText").objectReferenceValue = hsTMP;
             so.ApplyModifiedProperties();
-            CreateButton(canvasObj, "RetryBtn", "Prøv igjen",  new Vector2(0, -110), ctrl, "OnRetryClicked");
-            CreateButton(canvasObj, "MenuBtn",  "Hovedmeny",   new Vector2(0, -180), ctrl, "OnMainMenuClicked");
-            CreateButton(canvasObj, "QuitBtn",  "Avslutt",     new Vector2(0, -250), ctrl, "OnQuitClicked");
+            CreateButton(canvasObj, "RetryBtn", "Try again",  new Vector2(0, -110), ctrl, "OnRetryClicked");
+            CreateButton(canvasObj, "MenuBtn",  "Main menu",   new Vector2(0, -180), ctrl, "OnMainMenuClicked");
+            CreateButton(canvasObj, "QuitBtn",  "Quit",     new Vector2(0, -250), ctrl, "OnQuitClicked");
         }
         else // WinScreen
         {
             var ctrl = canvasObj.GetComponent<WinScreen>();
-            var killsTMP = CreateTMPText(canvasObj, "KillsText",     "Totalt: 0 zombier drept!", new Vector2(0, 14),  new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 30);
-            var hsTMP    = CreateTMPText(canvasObj, "HighScoreText", "Ny rekord: 0 kills",        new Vector2(0, -26), new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 22);
+            var killsTMP = CreateTMPText(canvasObj, "KillsText",     "Total: 0 zombies killed!", new Vector2(0, 14),  new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 30);
+            var hsTMP    = CreateTMPText(canvasObj, "HighScoreText", "New best: 0 kills",        new Vector2(0, -26), new Vector2(0.5f,0.5f), new Vector2(0.5f,0.5f), 22);
             killsTMP.color = Color.white;
             hsTMP.color    = new Color(0.9f, 0.9f, 0.5f, 1f);
             SerializedObject so = new SerializedObject(ctrl);
             so.FindProperty("killsText").objectReferenceValue     = killsTMP;
             so.FindProperty("highScoreText").objectReferenceValue = hsTMP;
             so.ApplyModifiedProperties();
-            CreateButton(canvasObj, "PlayAgainBtn", "▶  Spill igjen", new Vector2(0, -100), ctrl, "OnPlayAgainClicked");
-            CreateButton(canvasObj, "MenuBtn",      "Hovedmeny",       new Vector2(0, -170), ctrl, "OnMainMenuClicked");
-            CreateButton(canvasObj, "QuitBtn",      "Avslutt",         new Vector2(0, -240), ctrl, "OnQuitClicked");
+            CreateButton(canvasObj, "PlayAgainBtn", "▶  Play again", new Vector2(0, -100), ctrl, "OnPlayAgainClicked");
+            CreateButton(canvasObj, "MenuBtn",      "Main menu",       new Vector2(0, -170), ctrl, "OnMainMenuClicked");
+            CreateButton(canvasObj, "QuitBtn",      "Quit",         new Vector2(0, -240), ctrl, "OnQuitClicked");
         }
 
         EnsureEventSystem();
