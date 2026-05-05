@@ -1,7 +1,8 @@
 using UnityEngine;
 
-// ZoneManager koordinerer ett spillnivå (by eller strand): musikk og synk med GameManager.CurrentZone
-// Én ZoneManager per level-scene — ikke DontDestroyOnLoad
+// ZoneManager — per level-scene: setter GameManager.sone, Playing, starter riktig BGM (PG2202-10 + PG2202-12 scene-flyt).
+// Pensum: én koordinator på rot; ZombieSpawner egen logikk i Start.
+// Ekstra: zoneNumber synker med GameManager og lagring — dokumenter i rapport hvordan by → strand låses opp.
 public class ZoneManager : MonoBehaviour
 {
     [SerializeField] private ZombieSpawner zombieSpawner;

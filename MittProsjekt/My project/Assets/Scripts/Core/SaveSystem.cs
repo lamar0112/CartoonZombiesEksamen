@@ -1,8 +1,8 @@
 using UnityEngine;
 
-// Statisk hjelpeklasse for lagring og lasting av spillerdata (PG2202-12)
-// Bruker Unity sin innebygde PlayerPrefs - lagrer nøkkel/verdi-par lokalt på maskinen
-// Fordel: enkel å bruke fra alle scripts uten å opprette en instans
+// SaveSystem — statisk lagring med PlayerPrefs (PG2202-12: SetInt/GetInt, enkel persistens uten filhåndtering).
+// Pensum: nøkkelkonstanter; kall fra GameManager ved game over / meny.
+// Ekstra: sone-opplåsing og master volume — støtter flernivå-flyt og pausemeny; ukryptert som i forelesning (OK for eksamen).
 public static class SaveSystem
 {
     // Konstanter for nøkler - unngår skrivefeil ved bruk
@@ -15,7 +15,7 @@ public static class SaveSystem
     public static void SaveHighScore(int score)  => PlayerPrefs.SetInt(KEY_HIGHSCORE, score);
     public static int  GetHighScore()            => PlayerPrefs.GetInt(KEY_HIGHSCORE, 0); // 0 som standard
 
-    /// <summary>Drepte i siste runde som endte i meny (hovedmeny / game over / win).</summary>
+    // Drepte i siste runde (når man går til hovedmeny / game over / win) — vises i MainMenu.
     public static void SaveLastRunKills(int kills) => PlayerPrefs.SetInt(KEY_LAST_RUN, kills);
     public static int  GetLastRunKills()          => PlayerPrefs.GetInt(KEY_LAST_RUN, -1);
 

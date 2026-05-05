@@ -1,8 +1,9 @@
 using TMPro;
 using UnityEngine;
 
-// Flytende skadepoeng-tekst over en zombie etter treff (PG2202-08 Canvas/UI)
-// Spawnes fra PlayerShooting.TryShoot() ved zombie-treff.
+// DamagePopup — verdensrom-TMP som stiger og fades (PG2202-08; Instantiate fra PlayerShooting).
+// Pensum: statisk Spawn(); Update for bevegelse og alfaskikk.
+// Ekstra: stor font for lesbarhet i world-space — kompromiss mellom avstand og UI-tykkelse (typisk polish).
 public class DamagePopup : MonoBehaviour
 {
     [Header("Display")]
@@ -30,7 +31,7 @@ public class DamagePopup : MonoBehaviour
     {
         _tmp                  = gameObject.AddComponent<TextMeshPro>();
         _tmp.text             = $"-{damage}";
-        // World-space TMP: small font sizes disappear at gameplay scale — keep this large enough to read.
+        // World-space TMP: liten font forsvinner på avstand — hold font stor nok til å leses i spillet.
         _tmp.fontSize         = 42f;
         _tmp.fontStyle        = FontStyles.Bold;
         _tmp.alignment        = TextAlignmentOptions.Center;

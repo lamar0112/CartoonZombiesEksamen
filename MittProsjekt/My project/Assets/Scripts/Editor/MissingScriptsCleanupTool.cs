@@ -3,7 +3,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Fjerner «Missing (Script)»-komponenter (typisk etter slettede assets / flyttede filer).
+// MissingScriptsCleanupTool — fjerner «Missing (Script)» i aktiv scene (etter slettede/flyttede scripts).
+// Pensum: GameObject-hierarki-helse før innlevering (PG2202-01).
+// Ekstra: batch for level01/02 — sparer tid; dialog på engelsk matcher Repair-serien.
 // Meny: CartoonZombies → Repair → Remove missing scripts (active scene)
 public static class MissingScriptsCleanupTool
 {

@@ -36,10 +36,21 @@ public class ReadmeEditor : Editor {
 	
 	static void LoadLayout()
 	{
-		var assembly = typeof(EditorApplication).Assembly; 
+		var assembly = typeof(EditorApplication).Assembly;
 		var windowLayoutType = assembly.GetType("UnityEditor.WindowLayout", true);
-		var method = windowLayoutType.GetMethod("LoadWindowLayout", BindingFlags.Public | BindingFlags.Static);
-		method.Invoke(null, new object[]{Path.Combine(Application.dataPath, "IgniteCoders/Simple Water Shader/Info/Layout.wlt"), false});
+		// Unity 6+ has multiple LoadWindowLayout overloads — pick (string, bool) explicitly to avoid AmbiguousMatchException.
+		var method = windowLayoutType.GetMethod(
+			"LoadWindowLayout",
+			BindingFlags.Public | BindingFlags.Static,
+			null,
+			new[] { typeof(string), typeof(bool) },
+			null);
+		if (method == null)
+			return;
+		var layoutPath = Path.Combine(Application.dataPath, "ThirdParty/IgniteCoders/Simple Water Shader/Info/Layout.wlt");
+		if (!File.Exists(layoutPath))
+			return;
+		method.Invoke(null, new object[] { layoutPath, false });
 	}
 	
 	[MenuItem("Documentation/Simple Water Shader")]

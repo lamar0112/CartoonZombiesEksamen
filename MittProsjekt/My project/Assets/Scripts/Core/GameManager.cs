@@ -1,12 +1,12 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Enum for å holde styr på hvilken tilstand spillet er i
-// Brukes av GameManager og andre scripts for å reagere på endringer
+// Enum: globale spilltilstander (meny, pause, game over, seier). Brukes av UI og andre script (PG2202-02).
 public enum GameState { MainMenu, Playing, Paused, GameOver, Win }
 
-// Singleton - kun én GameManager eksisterer i hele spillets levetid (PG2202-12)
-// DontDestroyOnLoad gjør at den ikke slettes ved sceneskifte
+// GameManager — singleton som styrer tilstand, drapstall og scenebytte (PG2202-12: DontDestroyOnLoad, SceneManager, PlayerPrefs via SaveSystem).
+// Pensum: hendelser (delegate/event) for løs kobling; Time.timeScale for pause; Application-flow som i forelesning 12.
+// Ekstra: flere soner (by → strand) og RegisterKill for highscore — støtter eksamenskrav om progresjon og målbar score.
 public class GameManager : MonoBehaviour
 {
     // Statisk referanse - andre scripts henter GameManager via GameManager.Instance

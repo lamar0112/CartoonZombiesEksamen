@@ -1,10 +1,11 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // TextMeshPro - bedre tekstkvalitet enn vanlig UI Text (PG2202-08)
+using TMPro;
 
-// Viser spillinfo mens spillet pågår: helse, ammo, kills, bølge
-// Abonnerer på events fra GameManager og PlayerHealth - trenger ingen direkte kall
+// HUDController — in-game HUD med TMP (PG2202-08 UI, eksamenskrav 6: informasjon under spill).
+// Pensum: abonnement på events/delegates fra GameManager, PlayerHealth, PlayerShooting (PG2202-02 løs kobling).
+// Ekstra: toast-melding og auto-wire i editor-verktøy — reduserer manuelt arbeid; beskrives i rapport som verktøy-støtte.
 public class HUDController : MonoBehaviour
 {
     [Header("Health")]
@@ -124,45 +125,48 @@ public class HUDController : MonoBehaviour
         _toastRoutine = null;
     }
 
-    // Semi-transparent panel behind the top-left stats so text stays readable on any background (PG2202-08).
+    // Toppbar-panel over hele skjermbredden (60px høy) for HP/bølge/drap-tekst (PG2202-08)
     private void EnsureHudReadabilityPanel()
     {
-        if (healthText == null) return;
-        RectTransform anchor = healthText.rectTransform;
-        Transform parent = anchor.parent;
-        if (parent == null) return;
-        if (parent.Find("HUD_ReadabilityPanel") != null) return;
+        Transform canvasRoot = transform;
+        // Finn canvas-root (kan være et Canvas-objekt over HUDController)
+        Canvas c = GetComponentInParent<Canvas>();
+        if (c != null) canvasRoot = c.transform;
 
-        var panelGo = new GameObject("HUD_ReadabilityPanel");
-        panelGo.transform.SetParent(parent, false);
-        panelGo.transform.SetAsFirstSibling();
+        if (canvasRoot.Find("HUD_TopBar") != null) return;
 
-        var rt = panelGo.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0f, 1f);
-        rt.anchorMax = new Vector2(0f, 1f);
-        rt.pivot     = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(6f, -6f);
-        rt.sizeDelta = new Vector2(420f, 220f);
+        var barGo = new GameObject("HUD_TopBar");
+        barGo.transform.SetParent(canvasRoot, false);
+        barGo.transform.SetAsFirstSibling();
 
-        var img = panelGo.AddComponent<Image>();
-        img.color = new Color(0.02f, 0.02f, 0.04f, 0.78f);
+        var rt = barGo.AddComponent<RectTransform>();
+        rt.anchorMin        = new Vector2(0f, 1f);
+        rt.anchorMax        = new Vector2(1f, 1f);
+        rt.pivot            = new Vector2(0.5f, 1f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta        = new Vector2(0f, 58f);
+
+        var img = barGo.AddComponent<Image>();
+        img.color         = new Color(0f, 0f, 0f, 0.52f);
         img.raycastTarget = false;
     }
 
-    // Luft mellom linjer — reduserer «alt oppå hverandre» før du finjusterer RectTransform i Canvas (PG2202-08)
+    // Typografi for alle HUD-elementer — tydelig uten for store størrelser (PG2202-08)
     private void ApplyHudTypography()
     {
         EnsureHudReadabilityPanel();
 
-        StyleHudText(healthText,  28,  FontStyles.Bold,   new Color(0.2f, 1f, 0.4f),    outlined: true);
-        StyleHudText(waveText,    24,  FontStyles.Normal, new Color(1f, 1f, 1f),          outlined: true);
-        StyleHudText(killsText,   24,  FontStyles.Bold,   new Color(1f, 0.85f, 0.2f),    outlined: true);
-        StyleHudText(ammoText,    26,  FontStyles.Bold,   new Color(1f, 1f, 1f),          outlined: true);
+        // HP — grønn, bold, litt større (viktigst å se)
+        StyleHudText(healthText,  26, FontStyles.Bold,   new Color(0.22f, 1f, 0.45f),   outlined: true);
+        // Bølge/zombier — hvit, normal, sentrert
+        StyleHudText(waveText,    20, FontStyles.Normal, new Color(0.95f, 0.95f, 1f),    outlined: true);
+        // Drap — gul/gull
+        StyleHudText(killsText,   20, FontStyles.Bold,   new Color(1f, 0.85f, 0.15f),   outlined: true);
+        // Ammo — hvit, stor — viktig i strid
+        StyleHudText(ammoText,    30, FontStyles.Bold,   new Color(1f, 1f, 1f),          outlined: true);
+        // Reload — oransje/rød, blinkende ved reload
+        if (reloadText != null) StyleHudText(reloadText, 18, FontStyles.Bold, new Color(1f, 0.35f, 0.08f), outlined: true);
         if (waveText != null) waveText.richText = true;
-        if (reloadText != null)
-        {
-            StyleHudText(reloadText, 22, FontStyles.Bold, new Color(1f, 0.3f, 0.1f), outlined: true);
-        }
     }
 
     // Setter farge, størrelse og svart outline for god lesbarhet uten bakgrunnspanel (PG2202-08)
@@ -213,18 +217,18 @@ public class HUDController : MonoBehaviour
         {
             // Spilleren har ikke funnet pistolen ennå
             if (ammoText != null)
-                ammoText.text = "<color=#888888>No pistol equipped</color>";
+                ammoText.text = "<color=#888888>Ingen pistol</color>";
             if (reloadText != null)
                 reloadText.gameObject.SetActive(false);
         }
 
-        // Oppdaterer bølge-info fra ZombieSpawner
+        // Oppdaterer zombie-info fra ZombieSpawner (viser ikke bølge — de respawner uansett)
         if (zombieSpawner != null && waveText != null)
         {
-            string zombieColor = zombieSpawner.ZombiesAlive > 0 ? "#FF4444" : "#44FF88";
-            waveText.text =
-                $"<b>Wave {zombieSpawner.CurrentWave}/{zombieSpawner.TotalWaves}</b>  ·  " +
-                $"<color={zombieColor}>Zombies left: {zombieSpawner.ZombiesAlive}</color>";
+            int alive = zombieSpawner.ZombiesAlive;
+            string zCol = alive > 0 ? "#FF5555" : "#55FF88";
+            string status = alive > 0 ? $"<color={zCol}>{alive} zombier</color>" : "<color=#55FF88>Ingen nær</color>";
+            waveText.text = status;
         }
     }
 
@@ -248,7 +252,7 @@ public class HUDController : MonoBehaviour
     private void UpdateKills(int totalKills)
     {
         if (killsText != null)
-            killsText.text = $"<b>Kills: {totalKills}</b>";
+            killsText.text = $"<b>Drap: {totalKills}</b>";
     }
 
     // Kalles av PlayerHealth.OnHealthChanged UnityEvent
@@ -256,9 +260,8 @@ public class HUDController : MonoBehaviour
     {
         if (healthText == null) return;
         float pct = max > 0 ? (float)current / max : 0f;
-        // Grønn ved full helse → gul → rød ved lavt (PG2202-08 fargebruk)
         string col = pct > 0.6f ? "#33FF66" : pct > 0.3f ? "#FFCC00" : "#FF3333";
-        healthText.text = $"<color={col}><b>HP {current}/{max}</b></color>";
+        healthText.text = $"<color={col}><b>HP {current}</b><size=70%>/{max}</size></color>";
     }
 
     private void OnStateChanged(GameState newState)

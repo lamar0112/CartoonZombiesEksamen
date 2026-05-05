@@ -4,9 +4,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Etter MainMenu → Level01/02: SpawnPoints ved origo mens by-miljø er flyttet gir «tom himmel».
-// Flytter spiller til synlig kart og kobler hovedkamera på nytt.
-// Svart overlay skjuler glitch-frames mens spiller teleporteres til riktig sted (PG2202-08).
+// GameplaySceneBootstrap — kjører automatisk etter at Level01/Level02 er lastet (RuntimeInitializeOnLoad + sceneLoaded).
+// Pensum: SceneManager API, UI Image som enkel overlay (PG2202-08).
+// Ekstra: pipeline for store asset-pack kart der spawner/spiller står i «tom himmel» før miljøet er plassert — ikke pensum-eksempel,
+// men vanlig i eksamensprosjekter med ferdig by; vi skjuler korte hakk med svart lerret og retter kamera/spiller.
 public static class GameplaySceneBootstrap
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]

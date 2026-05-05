@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEditor;
 
-// Custom EditorWindow — CartoonZombies → Settings (PG2202-08 ScriptableObject)
-// Samler alle innstillinger på ett sted slik at man slipper å lete i Inspector-paneler
-// Demonstrerer: EditorWindow, SerializedObject/Property, ScriptableObject-redigering
+// GameSettingsWindow — EditorWindow under CartoonZombies → Settings (PG2202-08 ScriptableObject + editor UI).
+// Pensum: SerializedObject/Property for WaveData, GameAudioSettings, CheatMenuSettings m.m.
+// Ekstra: én «kontrollsentral» for gruppa — reduserer spredte assets; faner er enkel state i OnGUI.
 public class GameSettingsWindow : EditorWindow
 {
     // Faner - bruker int-indeks som enkel state-maskin for hvilken fane som vises
@@ -175,7 +175,8 @@ public class GameSettingsWindow : EditorWindow
     {
         SectionLabel("Waves (WaveData ScriptableObjects)");
         EditorGUILayout.HelpBox(
-            "WaveData = ScriptableObject assets (PG2202-08). Changes save to the .asset files and apply on next Play.",
+            "WaveData = ScriptableObject assets (PG2202-08). Changes save to the .asset files and apply on next Play.\n\n" +
+            "Runtime (in scene): add component RuntimeHierarchyTuning on a GameObject under GameplaySystems — F10 opens sliders for damage multipliers and ZombieSpawner spread without using this editor window.",
             MessageType.Info);
 
         EditorGUILayout.Space(6);

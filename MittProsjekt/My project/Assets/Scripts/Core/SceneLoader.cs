@@ -1,8 +1,9 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // SceneManager ligger i dette namespace (PG2202-12)
+using UnityEngine.SceneManagement;
 
-// Statisk wrapper rundt SceneManager
-// Samler all scene-lasting på ett sted - enklere å endre scene-navn hvis nødvendig
+// SceneLoader — tynn wrapper over SceneManager.LoadScene (PG2202-12, lærebok kap. 23).
+// Pensum: scenen må ligge i Build Settings; vi sjekker med SceneUtility før lasting for tydelig feilmelding i Console.
+// Ekstra: engelsk feilmelding + hint til menyvalg — gjør det lettere for sensor å rette opp manglende build-innstillinger.
 public static class SceneLoader
 {
     // Laster en navngitt scene - scenen MÅ være lagt til i Build Settings

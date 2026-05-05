@@ -1,7 +1,8 @@
 using UnityEngine;
 
-// Singleton AudioManager - håndterer all lyd i spillet (PG2202-10)
-// DontDestroyOnLoad gjør at musikken ikke stopper ved sceneskifte (PG2202-12)
+// AudioManager — BGM/SFX, singleton + DontDestroyOnLoad (PG2202-10 lyd; PG2202-12 persistens mellom scener).
+// Pensum: PlayOneShot for SFX; volum kan leses fra SaveSystem / GameAudioSettings.
+// Ekstra: ScriptableObject-bibliotek (GameAudioSettings) samler klipp — letter bytte musikk uten å endre kode.
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }

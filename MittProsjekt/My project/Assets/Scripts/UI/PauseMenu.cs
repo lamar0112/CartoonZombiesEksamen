@@ -2,7 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-// Pausemeny - åpnes med ESC, fryser spillet via Time.timeScale (PG2202-12)
+// PauseMenu — ESC, Time.timeScale = 0, volumslider som skriver til SaveSystem (PG2202-12 + PG2202-10 lydnivå).
+// Pensum: Canvas panel; GameManager.SetState(Paused) der det er koblet; synlig musepeker.
+// Ekstra: enkel styling av panel via kode — rask iterasjon uten å låse design i prefab (kan flyttes til Inspector senere).
 public class PauseMenu : MonoBehaviour
 {
     [SerializeField] private GameObject pausePanel; // selve pause-panelet

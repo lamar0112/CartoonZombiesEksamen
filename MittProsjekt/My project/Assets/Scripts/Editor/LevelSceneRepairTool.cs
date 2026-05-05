@@ -3,7 +3,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Reparerer Level01_By og Level02_StrandSkog uten å slette bygget kart.
+// LevelSceneRepairTool — åpner level-scener og reparerer managers, lys, kamera, EventSystem uten å slette kart.
+// Pensum: robust scene-arbeid (PG2202-01); dialog på engelsk matcher øvrige repair-menyer.
+// Ekstra: gruppearbeid med mange iterasjoner — verktøyet reduserer manuelle feil før innlevering.
 // Meny: CartoonZombies → Repair → …
 public static class LevelSceneRepairTool
 {

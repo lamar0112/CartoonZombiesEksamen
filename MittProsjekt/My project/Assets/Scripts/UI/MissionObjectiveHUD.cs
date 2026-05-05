@@ -1,17 +1,24 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Nederste «mål / win-lose»-hjelp — må IKKE bruke samme TMP som MissionManager (oppdragstekst).
+// MissionObjectiveHUD — kort tekst om mål/kontroller; TMP + CanvasGroup fade (PG2202-08 UI).
+// Pensum: skjul etter tid og ved første skudd (GameFeel); scene-navn styrer strand vs by-hjelp.
+// Ekstra: runtime-opprettet «strip» hvis referanser mangler — robusthet etter verktøy-import; nevnes i rapport.
 public class MissionObjectiveHUD : MonoBehaviour
 {
     [Tooltip("Kort hjelp om seier/tap — eget felt under oppdragspanelet.")]
     [SerializeField] private TextMeshProUGUI goalsHelpText;
 
+    [Tooltip("Sekunder før panelet fades ut automatisk.")]
+    [SerializeField] private float autoHideDelay = 25f;
+
     private PlayerShooting _shooting;
-    private bool           _hasFired;
+    private bool           _hidden;
     private bool           _isBeachLevel;
+    private CanvasGroup    _group;
 
     private TextMeshProUGUI ResolveGoalsText()
     {
@@ -34,14 +41,18 @@ public class MissionObjectiveHUD : MonoBehaviour
 
         var panel = new GameObject("GoalsHintPanel");
         panel.transform.SetParent(canvas.transform, false);
+
+        _group = panel.AddComponent<CanvasGroup>();
+
         var rt = panel.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, 0f);
-        rt.anchorMax = new Vector2(0.5f, 0f);
-        rt.pivot = new Vector2(0.5f, 0f);
-        rt.anchoredPosition = new Vector2(0f, 108f);
-        rt.sizeDelta = new Vector2(720f, 102f);
+        rt.anchorMin        = new Vector2(0f, 0f);
+        rt.anchorMax        = new Vector2(0f, 0f);
+        rt.pivot            = new Vector2(0f, 0f);
+        rt.anchoredPosition = new Vector2(12f, 14f);
+        rt.sizeDelta        = new Vector2(540f, 78f);
+
         var img = panel.AddComponent<Image>();
-        img.color = new Color(0.04f, 0.05f, 0.09f, 0.72f);
+        img.color         = new Color(0.04f, 0.06f, 0.12f, 0.78f);
         img.raycastTarget = false;
 
         var textGo = new GameObject("LevelGoalsText");
@@ -51,12 +62,15 @@ public class MissionObjectiveHUD : MonoBehaviour
         tr.anchorMax = Vector2.one;
         tr.offsetMin = new Vector2(12, 8);
         tr.offsetMax = new Vector2(-12, -8);
+
         var tmp = textGo.AddComponent<TextMeshProUGUI>();
-        tmp.text = " ";
-        tmp.richText = true;
+        tmp.text      = " ";
+        tmp.richText  = true;
         tmp.alignment = TextAlignmentOptions.TopLeft;
-        tmp.fontSize = 15;
-        tmp.color = Color.white;
+        tmp.fontSize  = 14f;
+        tmp.color     = new Color(0.92f, 0.94f, 0.98f);
+        tmp.outlineWidth = 0.2f;
+        tmp.outlineColor = new Color32(0, 0, 0, 160);
         return tmp;
     }
 
@@ -65,6 +79,9 @@ public class MissionObjectiveHUD : MonoBehaviour
         var tmp = ResolveGoalsText();
         if (tmp == null) return;
 
+        if (_group == null && tmp.transform.parent != null)
+            _group = tmp.transform.parent.GetComponent<CanvasGroup>();
+
         _isBeachLevel = SceneManager.GetActiveScene().name == GameSceneNames.Level02StrandSkog;
 
         _shooting = FindFirstObjectByType<PlayerShooting>();
@@ -72,73 +89,94 @@ public class MissionObjectiveHUD : MonoBehaviour
             _shooting.OnWeaponFired += OnFirstShot;
 
         ApplyGoalsLayout(tmp);
+
         if (_isBeachLevel)
         {
             tmp.text =
-                "<b>Beach — quick goals</b>\n" +
-                "<size=90%><b>Win:</b> Waves → boat → island → <b>chest</b>.  <b>Lose:</b> HP = 0.\n" +
-                "Orange <b>▲</b> above compass ring = walk direction to the current hint.</size>";
+                "<b>Strand/skog — mål</b>\n" +
+                "<size=90%><b>Seier:</b> Drep zombier → båt → øy → <b>kiste</b>.  " +
+                "<b>Tap:</b> HP = 0.  Oransje <b>▲</b> = retning til neste mål.</size>";
         }
         else
         {
             tmp.text =
-                "<b>City — quick goals</b>\n" +
-                "<size=90%><b>Win:</b> Waves → parkour (both) → <b>exit</b> to beach.  <b>Lose:</b> HP = 0.\n" +
-                "Orange <b>▲</b> = direction to pistol / car / exit when active.</size>";
+                "<b>By — mål</b>\n" +
+                "<size=90%><b>Seier:</b> Drep zombier → parkour (begge soner) → <b>exit</b> til strand.  " +
+                "<b>Tap:</b> HP = 0.  Oransje <b>▲</b> = retning til pistol / bil / exit.</size>";
         }
 
         ApplyControlHints();
+        StartCoroutine(AutoHide());
     }
 
     private static void ApplyGoalsLayout(TextMeshProUGUI tmp)
     {
         tmp.enableAutoSizing = false;
-        tmp.fontSize = 15;
-        tmp.lineSpacing = 22f;
-        tmp.richText = true;
-        tmp.alignment = TextAlignmentOptions.TopLeft;
-        tmp.color = new Color(0.94f, 0.95f, 0.98f, 0.98f);
-        var rt = tmp.rectTransform;
-        if (rt != null && rt.sizeDelta.y > 120f)
-            rt.sizeDelta = new Vector2(rt.sizeDelta.x, 118f);
+        tmp.fontSize         = 14f;
+        tmp.lineSpacing      = 18f;
+        tmp.richText         = true;
+        tmp.alignment        = TextAlignmentOptions.TopLeft;
+        tmp.color            = new Color(0.92f, 0.94f, 0.98f, 0.98f);
     }
 
     private void ApplyControlHints()
     {
-        var go = GameObject.Find("ControlHintsText");
+        var go   = GameObject.Find("ControlHintsText");
         var ctrl = go != null ? go.GetComponent<TextMeshProUGUI>() : null;
         if (ctrl == null) return;
 
-        if (_isBeachLevel)
-        {
-            ctrl.text =
-                "WASD move · Shift sprint · Space jump · Mouse look · LMB shoot · R reload · ESC pause · Y cheats · <b>F = boat</b> when unlocked";
-        }
-        else
-        {
-            ctrl.text =
-                "WASD move · Shift sprint · Space jump · Mouse look · LMB shoot · R reload · ESC pause · Y cheats · <b>F = car</b> when near";
-        }
+        ctrl.fontSize = 12f;
+        ctrl.color    = new Color(0.75f, 0.78f, 0.82f);
+
+        ctrl.text = _isBeachLevel
+            ? "WASD beveg · Shift sprint · Space hopp · Musepeker sikt · LMB skyt · R last · ESC pause · Y juks · <b>F = båt</b> når låst opp"
+            : "WASD beveg · Shift sprint · Space hopp · Musepeker sikt · LMB skyt · R last · ESC pause · Y juks · <b>F = bil</b> når nær";
+    }
+
+    // Fades ut automatisk etter autoHideDelay sekunder
+    private IEnumerator AutoHide()
+    {
+        yield return new WaitForSeconds(autoHideDelay);
+        yield return FadeOut(1.2f);
+        _hidden = true;
     }
 
     private void OnFirstShot()
     {
+        if (_hidden) return;
         var tmp = ResolveGoalsText();
-        if (_hasFired || tmp == null) return;
-        _hasFired = true;
+        if (tmp == null) return;
 
         if (_isBeachLevel)
         {
             tmp.text =
-                "<b>Reminder</b>\n" +
-                "<size=90%>Boat = F when unlocked. Chest on island wins. Stay on land / NavMesh — deep water blocks you.</size>";
+                "<b>Påminnelse</b>\n" +
+                "<size=90%>Båt = F når låst opp.  Kisten på øya gir seier.  " +
+                "Hold deg på land / NavMesh — dypt vann stopper deg.</size>";
         }
         else
         {
             tmp.text =
-                "<b>Reminder</b>\n" +
-                "<size=90%>Finish both parkour zones, then use the green exit. Car = F near DrivableCar.</size>";
+                "<b>Påminnelse</b>\n" +
+                "<size=90%>Fullfør begge parkour-sonene, bruk så den grønne exiten.  " +
+                "Bil = F nær bilen.  WASD kjører.</size>";
         }
+
+        StopAllCoroutines();
+        StartCoroutine(AutoHide());
+    }
+
+    private IEnumerator FadeOut(float duration)
+    {
+        if (_group == null) yield break;
+        float t = 0f;
+        while (t < duration)
+        {
+            t             += Time.unscaledDeltaTime;
+            _group.alpha   = 1f - Mathf.Clamp01(t / duration);
+            yield return null;
+        }
+        if (_group != null) _group.alpha = 0f;
     }
 
     private void OnDestroy()

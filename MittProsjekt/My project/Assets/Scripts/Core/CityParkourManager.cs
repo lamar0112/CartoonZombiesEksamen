@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-// Styrer by-scenens to parkour-soner (ParkourZone1 og ParkourZone2)
-// Singleton — kun én CityParkourManager per scene (PG2202-12 Singleton)
-// Aktiverer sone-triggeren til strand-nivået når begge sonene er fullført
+// CityParkourManager — to mynt-soner i by; når begge er klare, skrus strand-exit på (PG2202-12 singleton; PG2202-03 state).
+// Pensum: teller fra CoinCollectable; UnityEvent for HUD.
+// Ekstra: parkour som progresjonslås — utvider spillflyt utover «drep alt»; koble til ZoneTrigger.requireBothParkourZones.
 //
 // Oppsett i Inspector:
 //  - coinsInZone1 / coinsInZone2: tell mynter i hver sone i Scene-view (Gizmos)
@@ -32,6 +32,12 @@ public class CityParkourManager : MonoBehaviour
     private bool zone2Complete  = false;
 
     public bool BothAreasComplete => zone1Complete && zone2Complete;
+
+    // Til UI / debug — antall mynter konfigurert per sone.
+    public int TotalCoinsZone1 => coinsInZone1;
+    public int TotalCoinsZone2 => coinsInZone2;
+    public int CollectedZone1  => zone1Collected;
+    public int CollectedZone2  => zone2Collected;
 
     private void Awake()
     {

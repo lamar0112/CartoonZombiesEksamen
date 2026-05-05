@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Over-the-shoulder tredjeperson kamera (PG2202-04)
-// LateUpdate kjøres etter all annen Update - unngår jitter når spilleren beveger seg
+// CameraFollow — tredjeperson + musepitch, LateUpdate for jevn følging (PG2202-04 transform, PG2202-12 SceneManager ved scene load).
+// Pensum: offset bak spiller; Input.GetAxis for rotasjon der det brukes.
+// Ekstra: vehicleMode med annet offset når CarInteraction parentes spiller til bil — unngår at kamera klipper i karosseri.
 public class CameraFollow : MonoBehaviour
 {
     [SerializeField] private Transform target;
@@ -63,6 +64,13 @@ public class CameraFollow : MonoBehaviour
 
         pitch -= Input.GetAxis("Mouse Y") * mouseSens;
         pitch  = Mathf.Clamp(pitch, minPitch, maxPitch);
+
+        // Noclip: PlayerMovement er av — roter spilleren horisontalt med musa slik at pil/kamera følger (PG2202-04).
+        if (CheatMenu.Instance != null && CheatMenu.Instance.IsNoclipActive && !_vehicleMode)
+        {
+            float mouseX = Input.GetAxis("Mouse X") * mouseSens;
+            target.Rotate(0f, mouseX, 0f, Space.World);
+        }
 
         // Kameraets rotasjon = målets horisontal-rotasjon + kamera-pitch
         Vector3    offset = _vehicleMode ? vehicleOffset : shoulderOffset;

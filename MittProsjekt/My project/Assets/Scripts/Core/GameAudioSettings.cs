@@ -1,7 +1,8 @@
 using UnityEngine;
 
-// Én asset for all sone-musikk — gruppa finner alt under Assets/ScriptableObjects (PG2202-08)
-// Spillet har to nivåer: Level01_By og Level02_StrandSkog
+// GameAudioSettings — ScriptableObject med BGM-klipp og volum per sone (PG2202-08 ScriptableObject; PG2202-10 lyd).
+// Pensum: én asset som AudioManager leser; enklere å bytte musikk uten å bygge på nytt.
+// Ekstra: sfxGameplayScale — finjustering av SFX vs musikk for balanse på eksamensmaskiner.
 [CreateAssetMenu(fileName = "GameAudioSettings", menuName = "CartoonZombies/Game Audio Settings")]
 public class GameAudioSettings : ScriptableObject
 {

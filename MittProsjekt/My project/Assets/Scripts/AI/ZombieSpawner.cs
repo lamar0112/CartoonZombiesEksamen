@@ -1,21 +1,22 @@
-using System.Collections; // trengs for IEnumerator / Coroutine
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-// ZombieSpawner leser WaveData og spawner zombier med jevne mellomrom
-// Bruker Coroutine i stedet for Update() fordi vi vil vente mellom hvert spawn (PG2202-08)
+// ZombieSpawner — leser WaveData (ScriptableObject), Instantiate av prefabs, NavMeshAgent etter spawn (PG2202-07 pathfinding, PG2202-08 prefabs).
+// Pensum: coroutine for tidsstyrt spawning; minimum antall levende zombier som enkel tilstandsstyring (PG2202-03 state).
+// Ekstra: horde-loop (repeatWavesForever), spredning på spawn, kollisjons-ignore mot bil når spiller sitter — for spillbarhet i stort bykart.
 public class ZombieSpawner : MonoBehaviour
 {
     [Header("Wave setup")]
-    [SerializeField] private WaveData[] waves; // assign WaveData assets here
+    [SerializeField] private WaveData[] waves;
 
     [Header("Spawn points")]
-    // Empty = spawn at this object's position. Otherwise assign spawn points in the Inspector
+    // Tom liste = spawn ved spawnerens posisjon. Ellers: dra inn tomme GameObjects i Inspector.
     [SerializeField] private Transform[] spawnPoints;
 
     [Header("Progression")]
-    [Tooltip("When true, loads next zone after the last wave is cleared. Keep false on the city level — use ZoneTrigger + missions instead.")]
+    [Tooltip("True = last neste sone når siste bølge er tom. La være false i byen — bruk ZoneTrigger + MissionManager i stedet.")]
     [SerializeField] private bool loadNextSceneWhenAllWavesComplete = false;
 
     [Tooltip("Når siste WaveData er ferdig, start bølgene på nytt (horde) — bra sammen med oppdrag «drep X zombier».")]
@@ -35,9 +36,16 @@ public class ZombieSpawner : MonoBehaviour
     [Tooltip("Radius rundt et tilfeldig valgt spawn-punkt når wide scatter brukes.")]
     [SerializeField] private float wideMapScatterSampleRadius = 88f;
 
-    private int  currentWave  = 0;
-    private int  zombiesAlive = 0;
-    private bool allWavesDone = false;
+    [Header("Horde minimum")]
+    [Tooltip("Minimum antall zombier alltid i live. Hvis færre: spawner én til hvert 3. sekund (by-befolknings-feel).")]
+    [SerializeField] private int minimumZombiesAlive = 14;
+    [Tooltip("Sekunder mellom hvert «top-up»-spawn når antallet er under minimum.")]
+    [SerializeField] private float topUpInterval = 2.8f;
+
+    private int   currentWave      = 0;
+    private int   zombiesAlive     = 0;
+    private bool  allWavesDone     = false;
+    private float _topUpTimer      = 0f;
 
     private void Start()
     {
@@ -56,6 +64,27 @@ public class ZombieSpawner : MonoBehaviour
             Debug.LogWarning($"ZombieSpawner: {all.Length} spawners in scene — use only one for correct counting.");
 
         StartCoroutine(StartWave(currentWave));
+    }
+
+    // Holder minst minimumZombiesAlive zombier i live til enhver tid (PG2202-03 state management)
+    private void Update()
+    {
+        if (minimumZombiesAlive <= 0 || waves == null || waves.Length == 0) return;
+        if (Time.timeScale <= 0f) return;
+
+        _topUpTimer += Time.deltaTime;
+        if (_topUpTimer < topUpInterval) return;
+        _topUpTimer = 0f;
+
+        if (zombiesAlive < minimumZombiesAlive)
+        {
+            // Spawn én zombie spredt på kartet
+            WaveData w = waves[currentWave % waves.Length];
+            if (w != null)
+            {
+                SpawnZombie(PickPrefabForWave(w));
+            }
+        }
     }
 
     // Coroutine: kjøres asynkront uten å fryse resten av spillet (PG2202-08)
@@ -121,6 +150,7 @@ public class ZombieSpawner : MonoBehaviour
 
         // Tell med én gang her — Start() på ny instans kjører først senere, ellers henger WaitUntil etter (PG2202-08)
         GameObject z = Instantiate(prefab, spawnPos, spawnPoint.rotation);
+        z.tag = "Zombie";
         if (spawnedZombieUniformScale > 0f && !Mathf.Approximately(spawnedZombieUniformScale, 1f))
         {
             Vector3 s = prefab.transform.localScale;
@@ -134,10 +164,16 @@ public class ZombieSpawner : MonoBehaviour
         zombiesAlive++;
         // NavMeshAgent trenger ofte én–to frames etter Instantiate før Warp sitter riktig
         StartCoroutine(DeferredSnapZombie(z));
+
+        if (FindFirstObjectByType<CarController>(FindObjectsInactive.Include) is CarController car &&
+            car.IsOccupied)
+            car.SetZombieCollisionsIgnored(true);
     }
 
     private IEnumerator DeferredSnapZombie(GameObject z)
     {
+        yield return null;
+        yield return null;
         yield return null;
         yield return null;
         if (z == null) yield break;
@@ -163,7 +199,10 @@ public class ZombieSpawner : MonoBehaviour
                 jitter.y = 0f;
                 Vector3 candidate = hub + jitter;
                 if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, wideMapScatterSampleRadius + 12f, NavMesh.AllAreas))
-                    return hit.position;
+                {
+                    if (!WaterDetection.GroundUnderPointIsLikelyWater(hit.position))
+                        return hit.position;
+                }
             }
         }
 
@@ -176,10 +215,25 @@ public class ZombieSpawner : MonoBehaviour
             jitter.y = 0f;
             Vector3 candidate = basePos + jitter;
             if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, randomSpawnScatterRadius + 8f, NavMesh.AllAreas))
-                return hit.position;
+            {
+                if (!WaterDetection.GroundUnderPointIsLikelyWater(hit.position))
+                    return hit.position;
+            }
         }
 
         return basePos;
+    }
+
+    // Les/skriv fra RuntimeHierarchyTuning (runtime — lagres ikke i prefab etter Play Mode uten «Apply» i editor).
+    public float RuntimeScatterRadius         => randomSpawnScatterRadius;
+    public float RuntimeWideScatterChance     => wideMapScatterChance;
+    public int   RuntimeMinimumZombiesAlive   => minimumZombiesAlive;
+
+    public void ApplyRuntimeSpawnTuning(float scatterRadius, float wideChance01, int minAlive)
+    {
+        randomSpawnScatterRadius = Mathf.Max(0f, scatterRadius);
+        wideMapScatterChance      = Mathf.Clamp01(wideChance01);
+        minimumZombiesAlive      = Mathf.Max(0, minAlive);
     }
 
     private Vector3 PickScatterHubPosition(Transform fallback)

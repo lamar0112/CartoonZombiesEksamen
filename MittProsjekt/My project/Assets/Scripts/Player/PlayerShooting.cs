@@ -1,8 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-// Håndterer skyting via Raycast fra kameraet (ikke fysiske prosjektiler)
-// Raycast er standard tilnærming for hitscan-våpen i Unity (PG2202-04 kollisjon)
+// PlayerShooting — hitscan-våpen med Raycast fra kamera (PG2202-04: kollisjon/deteksjon uten prosjektil-Rigidbody).
+// Pensum: Physics.Raycast; coroutine for reload; UnityEvent for HUD-kobling (PG2202-02).
+// Ekstra: deaktivert i Awake hvis WeaponPickup finnes — tvinger «hent pistol»-oppdrag før skyting (design for eksamensflyt).
 public class PlayerShooting : MonoBehaviour
 {
     [Header("Damage")]
@@ -103,9 +104,9 @@ public class PlayerShooting : MonoBehaviour
             ZombieHealth zombie = hit.collider.GetComponentInParent<ZombieHealth>();
             if (zombie != null)
             {
-                zombie.TakeDamage(damage);
-                // Vis flytende skadetall over zombie (PG2202-08)
-                DamagePopup.Spawn(damage, hit.point);
+                int dmg = Mathf.Max(1, Mathf.RoundToInt(damage * GameBalance.PlayerGunDamageMultiplier));
+                zombie.TakeDamage(dmg);
+                DamagePopup.Spawn(dmg, hit.point);
             }
         }
 
@@ -157,4 +158,12 @@ public class PlayerShooting : MonoBehaviour
     public bool IsReloading  => isReloading;
     public int  CurrentAmmo  => currentAmmo;
     public int  MaxAmmo      => maxAmmo;
+
+    /// <summary>Cheat / oppdrag: skru på våpen uten å endre HUD-prefab.</summary>
+    public void CheatEnableWeapon()
+    {
+        enabled = true;
+        currentAmmo = maxAmmo;
+        OnAmmoChanged?.Invoke(currentAmmo, maxAmmo);
+    }
 }

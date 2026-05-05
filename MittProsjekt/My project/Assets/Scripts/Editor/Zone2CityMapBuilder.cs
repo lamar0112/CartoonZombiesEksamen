@@ -5,9 +5,10 @@ using UnityEngine.SceneManagement;
 using Unity.AI.Navigation;
 using UnityEngine.AI;
 
-// Procedural by-kart (Kenney + Synty + …). FARE: sletter kartrot + Environment i aktiv scene.
-// Bruk kun på tom scene eller med Git-backup. Spillscenen heter nå Level01_By.
-// Nytt kart får roten «CityMap» (se LevelMapRootResolver).
+// Zone2CityMapBuilder — procedural by (Kenney m.fl.). FARE: sletter kartrot + Environment i aktiv scene — backup først.
+// Pensum: plassering av prefabs, NavMeshSurface, skala (PG2202-01, PG2202-AI).
+// Ekstra: stort verktøy for level-generering — ikke runtime; norsk advarselsdialog der det er destruktivt.
+// Nytt kart får roten «CityMap» (se LevelMapRootResolver). Spillscene: Level01_By.
 public static class Zone2CityMapBuilder
 {
     // ── Ressursstier ──────────────────────────────────────────────────────────

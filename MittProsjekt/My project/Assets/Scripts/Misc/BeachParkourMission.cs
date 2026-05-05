@@ -1,9 +1,8 @@
 using UnityEngine;
 
-// Parkour-sjekkpunkt-system for Zone3_Beach
-// Spilleren hopper mellom hoppeplattformer sør for stranden
-// Demonstrerer: trigger-basert state machine (PG2202-03), proximity-sjekk (PG2202-AI)
-// Sjekkpunkter kobles til fra Zone3BeachMapBuilder via SerializedObject
+// BeachParkourMission — sjekkpunkter + timer + respawn ved vann (PG2202-03 tilstandsmaskin; PG2202-04 avstand/proximity).
+// Pensum: enkel sekvens nextCheckpoint; statisk Action for ferdig (observer).
+// Ekstra: strand-sideinnhold utover hovedoppdrag; bygges/kobles ofte fra Zone3BeachMapBuilder — nevnes i rapport som verktøy-støtte.
 public class BeachParkourMission : MonoBehaviour
 {
     [Header("Sjekkpunkter — settes av Zone3BeachMapBuilder")]

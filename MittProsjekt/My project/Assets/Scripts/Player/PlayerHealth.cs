@@ -1,7 +1,9 @@
 using UnityEngine;
-using UnityEngine.Events; // UnityEvent er ikke direkte pensum, men gir løs kobling mellom scripts
+using UnityEngine.Events;
 
-// Håndterer spillerens helse - skiller helse-logikk fra bevegelse og skyting
+// PlayerHealth — helse, TakeDamage, død (PG2202-02 komponenter; PG2202-06 events/delegates via UnityEvent).
+// Pensum: enkel int-helse; GameManager får beskjed ved død; HUD kan abonnere uten hardkobling.
+// Ekstra: UnityEvent<int,int> for helsebar — rask kobling i Inspector; alternativt C# event som i forelesning.
 public class PlayerHealth : MonoBehaviour
 {
     [SerializeField] private int maxHealth = 100;

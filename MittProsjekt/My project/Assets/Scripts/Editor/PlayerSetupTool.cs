@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEditor;
 
+// PlayerSetupTool — meny som finner ithappy Base_Mesh og setter opp spiller-prefab med våre komponenter.
+// Pensum: prefab + komponent-stack (PG2202-02).
+// Ekstra: avhenger av tredjepartssti — dokumenter i rapport hvis prefab-navn endres.
 public class PlayerSetupTool
 {
     [MenuItem("CartoonZombies/Setup/05 Player prefab", false, 14)]

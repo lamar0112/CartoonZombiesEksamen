@@ -1,4 +1,6 @@
-// Én kilde for scene-navn (bygg-innstillinger + SceneManager) — unngå stavefeil (PG2202-12)
+// GameSceneNames — const-strenger for Build Settings og SceneManager.LoadScene (PG2202-12).
+// Pensum: én sann kilde unngår «magic strings» spredt i prosjektet.
+// Ekstra: norske scene-filer kan ha ulike navn i prosjektet — disse må matche eksakt det som står i File → Build Settings.
 public static class GameSceneNames
 {
     public const string MainMenu = "MainMenu";

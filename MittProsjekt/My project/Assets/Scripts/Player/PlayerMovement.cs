@@ -2,8 +2,10 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Tredjeperson CharacterController-bevegelse med mus-rotasjon (PG2202-04)
-// CharacterController håndterer kollisjoner uten Rigidbody
+// PlayerMovement — tredjeperson styring med CharacterController + musekikk (PG2202-04: kollisjon uten Rigidbody).
+// Pensum: Input.GetAxis, Time.deltaTime, tyngdekraft/hopp som i læreboka; Cursor.lockState under spill.
+// Ekstra (ikke obligatorisk pensum): «void recovery» og vann-sjekk — Kenney/Synty-kart har ofte feil spawn-Y,
+// vann-plan uten fysikk, og smale strender; vi teleporterer trygt tilbake så eksaminator ikke faller evig.
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
@@ -14,10 +16,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float gravity          = -20f;
     [SerializeField] private float mouseSensitivity = 2f;
 
-    [Header("Void recovery (under map / safety collider)")]
-    [Tooltip("World Y der spillbar bakke ca. ligger (ofte ~0). Sett lik en gulv-flises Position Y om hele kartet er flyttet.")]
+    [Header("Void-gjenoppretting (under kart / safety-boks)")]
+    [Tooltip("Omtrentlig Y der spillbar bakke ligger (ofte 0). Juster om hele miljøet er flyttet opp/ned.")]
     [SerializeField] private float approximatePlayableGroundY = 0f;
-    [Tooltip("Recovery starter når spiller-Y er så langt under «bakken» (unngår tidlig trigger i hopp/kanter).")]
+    [Tooltip("Start gjenoppretting når spilleren er så langt under bakkenivå (unngår falsk utløsning i hopp).")]
     [SerializeField] private float fallDepthBeforeVoidRecover = 12f;
     [SerializeField] private float voidRecoverCooldown        = 0.85f;
 
@@ -54,7 +56,7 @@ public class PlayerMovement : MonoBehaviour
         StartCoroutine(AlignSpawnAfterPhysicsReady());
     }
 
-    /// <summary>Wait a frame so MeshColliders from loaded scenes are registered before raycast snap.</summary>
+    // Vent én frame slik at MeshColliders i scenen er registrert før raycast-snap (Unity lasterekkefølge).
     private IEnumerator AlignSpawnAfterPhysicsReady()
     {
         yield return null;
@@ -63,7 +65,7 @@ public class PlayerMovement : MonoBehaviour
         AlignSpawnToGroundInLevelScenes();
     }
 
-    /// <summary>After load, snap feet to first solid mesh under the player (spawn Y is often wrong vs Kenney roads).</summary>
+    // Etter scene-last: snap føtter til første faste treff under spiller (spawn-Y er ofte feil mot Kenney-veier).
     private void AlignSpawnToGroundInLevelScenes()
     {
         string sn = SceneManager.GetActiveScene().name;
@@ -177,7 +179,7 @@ public class PlayerMovement : MonoBehaviour
         return WaterDetection.IsWaterCollider(hit.collider);
     }
 
-    /// <summary>Strand: unngå «henger fast» i grunnt vann ved kant — teleporter til siste tørre posisjon.</summary>
+    // Strand (Level02): unngå at CharacterController «henger» i grunnt vann ved kant — hopp tilbake til siste tørre punkt.
     private void MaybeRecoverFromShallowWaterEdge()
     {
         if (SceneManager.GetActiveScene().name != "Level02_StrandSkog") return;
@@ -208,10 +210,7 @@ public class PlayerMovement : MonoBehaviour
         cc.enabled = true;
     }
 
-    /// <summary>
-    /// Under the level, a downward ray from the sky often hits roofs first — use the safety box top instead.
-    /// Throttled + CC disable to avoid jitter inside CharacterController.
-    /// </summary>
+    // Blokker steg inn i vann (by): stråle fra himmelen treffer ofte tak først, så vi sjekker under planfot.
     private bool ShouldBlockMoveForWater(Vector3 horizontalDelta)
     {
         if (!IsWaterBlockScene()) return false;
@@ -240,10 +239,16 @@ public class PlayerMovement : MonoBehaviour
         nextVoidRecoverTime = Time.time + voidRecoverCooldown;
 
         cc.enabled = false;
-        if (!TryPlaceOnSafetyGroundTop())
-            AlignSpawnToGroundInLevelScenes();
+        transform.position = lastDryGroundPosition + Vector3.up * 0.35f;
         verticalVelocity.y = -2f;
         Physics.SyncTransforms();
+        // Fortsatt under «void»-grensen (sjelden): fall tilbake til safety-boks / respawn-snap
+        if (transform.position.y < voidRecoverBelowYCached)
+        {
+            if (!TryPlaceOnSafetyGroundTop())
+                AlignSpawnToGroundInLevelScenes();
+            Physics.SyncTransforms();
+        }
         cc.enabled = true;
     }
 

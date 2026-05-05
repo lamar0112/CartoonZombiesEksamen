@@ -4,9 +4,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Moves root GameObjects under GameplaySystems and EnvironmentArt (English hierarchy names).
-// Older scenes (_Gameplay_Systems, Spill_Systemer, Miljo, etc.) are renamed on cleanup.
-// Menu: CartoonZombies → Organize → 1 Cleanup hierarchy (active scene)
+// HierarchyLevelCleanupTool — flytter rot-objekter til GameplaySystems / EnvironmentArt (engelske navn = prosjektkonvensjon).
+// Pensum: ryddig hierarki letter samarbeid og sensur (PG2202-01 scene-struktur); støtter gamle norske rot-navn fra tidligere iterasjoner.
+// Meny: CartoonZombies → Organize → 1 Cleanup hierarchy (active scene)
 public static class HierarchyLevelCleanupTool
 {
     public const string GameplayRootName = "GameplaySystems";

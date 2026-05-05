@@ -1,8 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-// ZombieHealth håndterer skade og død - skiller helse-logikk fra AI-logikk
-// Dette gjør det enkelt å f.eks. legge til helse-bar senere uten å endre ZombieAI
+// ZombieHealth — HP, TakeDamage, død og kobling til ZombieAI (PG2202-02 metoder, PG2202-05 modulær agent).
+// Pensum: lyd via PlayClipAtPoint; Instantiate for VFX; spillerens raycast treffer via ZombieHealth på zombie.
+// Ekstra: tag «Zombie» i Awake (samsvar med TagManager og eventuelle CompareTag-sjekker); verdens-HUD ZombieHealthBarWorld.
 [RequireComponent(typeof(ZombieAI))]
 public class ZombieHealth : MonoBehaviour
 {
@@ -17,11 +18,12 @@ public class ZombieHealth : MonoBehaviour
     public int MaxHealth     => maxHealth;
     public int CurrentHealth => currentHealth;
 
-    /// <summary>current, max — for helsebar og UI.</summary>
+    // current, max — abonnert av ZombieHealthBarWorld (PG2202-08 UI-mønster: observer uten hard kobling).
     public event System.Action<int, int> OnHealthChanged;
 
     private void Awake()
     {
+        gameObject.tag = "Zombie";
         ai            = GetComponent<ZombieAI>();
         currentHealth = maxHealth;
         if (GetComponent<ZombieHealthBarWorld>() == null)

@@ -1,7 +1,9 @@
 using TMPro;
 using UnityEngine;
 
-// Enkel hint-linje (f.eks. «[F] Gå inn i bilen») — CarInteraction styrer innholdet.
+// InteractionHint — singleton TMP-linje for kontekst (F for bil m.m.) (PG2202-08; PG2202-12 delt tjeneste).
+// Pensum: Show/Hide fra CarInteraction eller andre interaksjoner.
+// Ekstra: sentral hint i stedet for mange små UI-elementer — mindre rot i Canvas-hierarkiet.
 public class InteractionHint : MonoBehaviour
 {
     public static InteractionHint Instance { get; private set; }

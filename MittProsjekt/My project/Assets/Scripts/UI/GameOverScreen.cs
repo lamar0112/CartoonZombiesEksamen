@@ -1,7 +1,9 @@
 using UnityEngine;
 using TMPro;
 
-// Game Over UI — én tekstblokk + kamera om scenen mangler det (PG2202-08)
+// GameOverScreen — tap-meny med sone/kills/highscore (PG2202-08 UI; PG2202-12 persistens).
+// Pensum: samme mønster som WinScreen; fallback-felter hvis bodyText ikke er dratt inn.
+// Ekstra: engelsk UI-tekst = prosjektkonvensjon; norsk forklaring står i kommentarer og rapport.
 public class GameOverScreen : MonoBehaviour
 {
     [Header("Text (recommended)")]

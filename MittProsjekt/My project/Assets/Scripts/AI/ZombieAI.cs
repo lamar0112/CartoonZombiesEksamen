@@ -1,8 +1,9 @@
 using UnityEngine;
-using UnityEngine.AI; // NavMeshAgent ligger i dette namespace (PG2202-07)
+using UnityEngine.AI;
 
-// Enum-basert FSM - "Active State Generates"-mønsteret fra PG2202-05
-// Hver tilstand håndterer sin egen logikk i Update()
+// ZombieAI — agent med endelig tilstandsmaskin (Patrol/Chase/Attack/Dead) — PG2202-05 FSM, PG2202-07 NavMeshAgent.SetDestination.
+// Pensum: enum-tilstander og overganger basert på avstand til spiller; Animator.SetFloat/SetBool (PG2202-09).
+// Ekstra: jevnlig «snap» mot bakke og vann-sjekk — store kart med ujevnt underlag ga zombier under mesh; dokumenteres som teknisk begrunnelse.
 public enum ZombieState { Patrol, Chase, Attack, Dead }
 
 // RequireComponent sørger for at NavMeshAgent og Animator alltid er på samme GameObject
@@ -11,7 +12,7 @@ public enum ZombieState { Patrol, Chase, Attack, Dead }
 public class ZombieAI : MonoBehaviour
 {
     [Header("Detection")]
-    [SerializeField] private float detectionRange = 22f; // større radius — skogen / åpne flater
+    [SerializeField] private float detectionRange = 38f; // stor radius — by med tett befolkning
     [SerializeField] private float attackRange    = 2f;  // når den begynner å angripe
 
     [Header("Combat")]
@@ -135,7 +136,11 @@ public class ZombieAI : MonoBehaviour
             if (DistanceToPlayer() <= attackRange)
             {
                 PlayerHealth ph = player.GetComponent<PlayerHealth>();
-                if (ph != null) ph.TakeDamage(attackDamage);
+                if (ph != null)
+                {
+                    int dmg = Mathf.Max(1, Mathf.RoundToInt(attackDamage * GameBalance.ZombieDamageToPlayerMultiplier));
+                    ph.TakeDamage(dmg);
+                }
             }
         }
 

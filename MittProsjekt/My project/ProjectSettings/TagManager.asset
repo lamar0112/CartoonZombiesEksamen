@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Player
   - Water
+  - Zombie
   layers:
   - Default
   - TransparentFX

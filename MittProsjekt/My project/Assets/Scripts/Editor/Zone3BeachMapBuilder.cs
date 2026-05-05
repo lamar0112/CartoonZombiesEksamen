@@ -4,8 +4,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using Unity.AI.Navigation;
 
-// Procedural strand-øy. FARE: sletter strand-kartrot + Environment. Spillscene: Level02_StrandSkog.
-// Nytt kart får roten «BeachMap» (se LevelMapRootResolver).
+// Zone3BeachMapBuilder — procedural strand/øy. FARE: sletter kartrot + Environment — backup først.
+// Pensum: terreng/prefab-layout, NavMesh, kobling til BeachParkourMission (PG2202-01, PG2202-03).
+// Ekstra: destruktiv rebuild-knapp — kun for utvikling; dialog på norsk for tydelig gruppevarsel.
+// Nytt kart får roten «BeachMap» (se LevelMapRootResolver). Spillscene: Level02_StrandSkog.
 public static class Zone3BeachMapBuilder
 {
     private const string NK      = "Assets/ThirdParty/Kenney/NatureKit/";

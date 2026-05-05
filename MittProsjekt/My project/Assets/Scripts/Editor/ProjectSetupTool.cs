@@ -5,8 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
-// Editor-script: vises som meny i Unity-editoren, kjøres ikke i spillet
-// Slett hele Scripts/Editor/-mappen etter eksamen hvis ønskelig
+// ProjectSetupTool — tidlige «Setup»-menyer for prefabs og grunnleggende assets.
+// Pensum: prefab-arbeid, Animator, enkel pipeline (PG2202-08).
+// Ekstra: gruppe-spesifikke stier (ithappy, Kenney); kjøres kun i editor — kan fjernes etter eksamen om ønskelig.
 public class ProjectSetupTool
 {
     [MenuItem("CartoonZombies/Setup/01 Zombie prefab", false, 10)]

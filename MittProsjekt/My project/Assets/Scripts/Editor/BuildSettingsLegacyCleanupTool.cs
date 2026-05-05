@@ -2,7 +2,9 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-// Removes outdated scene entries from Build Settings (old Zone-* paths, pre-rename level scenes).
+// BuildSettingsLegacyCleanupTool — fjerner utdaterte scener fra Build Settings (gamle Zone-* / rename).
+// Pensum: riktig build-liste for SceneManager (PG2202-12).
+// Ekstra: engelsk menytekst; kjør før innlevering hvis noen har gamle scener i lista.
 // Menu: CartoonZombies → Project → Strip legacy scenes from Build Settings
 public static class BuildSettingsLegacyCleanupTool
 {

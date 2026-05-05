@@ -1,8 +1,8 @@
 using UnityEngine;
 
-// ScriptableObject lar oss lagre spilldata som egne asset-filer i prosjektet (PG2202-08)
-// Én bølge per asset — Level01_By bruker typisk WaveData_Zone2, Level02_StrandSkog bruker WaveData_Zone3
-// Lag nye via: Assets → Create → CartoonZombies → WaveData
+// WaveData — ScriptableObject for bølgeparametre (PG2202-08: data-driven design, gjenbruk mellom scener).
+// Pensum: SerializeField-lignende public felt i SO; CreateAssetMenu for å lage nye assets fra Project-vinduet.
+// Ekstra: zombiePrefabVariants for visuell variasjon — ikke obligatorisk i pensum, men viser forståelse for prefab-pooling.
 [CreateAssetMenu(fileName = "WaveData", menuName = "CartoonZombies/WaveData")]
 public class WaveData : ScriptableObject
 {

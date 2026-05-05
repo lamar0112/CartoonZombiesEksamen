@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-/// <summary>Raycast for fothøyde — hopper over egen kollisjon og vann.</summary>
+// ZombieSnapPositionUtility — statisk hjelp for å lande zombier på bakke + NavMesh.SamplePosition/Warp (PG2202-07, PG2202-04 raycast).
+// Pensum: Physics.RaycastAll sortert etter avstand; NavMeshAgent.Warp etter plassering.
+// Ekstra: store sample-radius og fot-offset — store Synty/øy-kart + bake-feil gjør default radius for liten; vi begrunner det i rapport som polish for eksamen.
 public static class ZombieSnapPositionUtility
 {
     private const float RayHeight   = 140f;
@@ -26,7 +28,7 @@ public static class ZombieSnapPositionUtility
 
             if (WaterDetection.IsWaterCollider(gh.collider)) continue;
 
-            float y = gh.point.y + 0.42f;
+            float y = gh.point.y + 0.55f;
             if (skipOwnHierarchy != null)
             {
                 var rend = skipOwnHierarchy.GetComponentInChildren<Renderer>();
@@ -34,7 +36,7 @@ public static class ZombieSnapPositionUtility
                 {
                     float pivotToBottom = skipOwnHierarchy.transform.position.y - rend.bounds.min.y;
                     if (pivotToBottom > 0.02f)
-                        y = Mathf.Max(y, gh.point.y + pivotToBottom + 0.14f);
+                        y = Mathf.Max(y, gh.point.y + pivotToBottom + 0.22f);
                 }
                 else
                     y = gh.point.y + 0.62f;
@@ -54,8 +56,9 @@ public static class ZombieSnapPositionUtility
         Vector3 p = z.transform.position;
         Vector3 placed;
 
+        const float sampleRadius = 48f;
         if (!TryFeetOnSolidGround(p, z, out placed) &&
-            NavMesh.SamplePosition(p, out NavMeshHit nmHit, 22f, NavMesh.AllAreas) &&
+            NavMesh.SamplePosition(p, out NavMeshHit nmHit, sampleRadius, NavMesh.AllAreas) &&
             !TryFeetOnSolidGround(nmHit.position, z, out placed))
         {
             placed = new Vector3(nmHit.position.x, nmHit.position.y + 0.28f, nmHit.position.z);
@@ -65,7 +68,7 @@ public static class ZombieSnapPositionUtility
         Physics.SyncTransforms();
 
         if (z.TryGetComponent(out NavMeshAgent agent) &&
-            NavMesh.SamplePosition(placed, out NavMeshHit warpHit, 22f, NavMesh.AllAreas))
+            NavMesh.SamplePosition(placed, out NavMeshHit warpHit, sampleRadius, NavMesh.AllAreas))
         {
             Vector3 w = warpHit.position;
             w.y = Mathf.Max(w.y + 0.12f, placed.y);

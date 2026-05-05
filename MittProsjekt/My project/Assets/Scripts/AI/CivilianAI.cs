@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-// Sivil NPC i Zone2_City — flykter fra zombier, vandrer tilfeldig ellers
-// Viser NavMeshAgent i praksis (pensum PG2202-AI)
-// Bruker State Machine-mønster: Idle → Wander → Flee (PG2202-03)
+// CivilianAI — NavMeshAgent + enkel tilstandsmaskin Idle/Wander/Flee (PG2202-AI NavMesh; PG2202-03 states).
+// Pensum: SetDestination, radius-sjekk mot zombier, bytte hastighet etter modus.
+// Ekstra: atmosfære i byen — ikke eksamensminimum alene, men viser AI-kompetanse utover horde; forklar i rapport.
 [RequireComponent(typeof(NavMeshAgent))]
 public class CivilianAI : MonoBehaviour
 {

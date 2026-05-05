@@ -1,8 +1,8 @@
 using UnityEngine;
 
-// Mynt/poeng-objekt i by-scenens parkour-soner
-// Spilleren samler dem ved å gå gjennom — trigger-basert kollisjon (PG2202-04)
-// Rapporterer til CityParkourManager hvilken sone mynten tilhører
+// CoinCollectable — parkour-mynt i Level01_By (PG2202-04 OnTriggerEnter, PG2202-08 valgfri gameplay-utvidelse).
+// Pensum: CompareTag / komponent-sjekk for spiller; Destroy etter oppsamling; enkel transform-rotasjon.
+// Ekstra: konkav MeshCollider kan ikke være trigger — vi deaktiverer slike og legger SphereCollider (Unity-fysikkregel, forklares i rapport).
 [RequireComponent(typeof(Collider))]
 public class CoinCollectable : MonoBehaviour
 {
@@ -20,8 +20,32 @@ public class CoinCollectable : MonoBehaviour
 
     private void Awake()
     {
-        // Sørger for at collideren er trigger (PG2202-04)
-        GetComponent<Collider>().isTrigger = true;
+        // Triggers på konkave MeshCollider er ikke støttet — bruk sfære eller convex mesh (PG2202-04)
+        EnsurePickupTriggers();
+    }
+
+    private void EnsurePickupTriggers()
+    {
+        Collider[] cols = GetComponents<Collider>();
+        bool anyTrigger = false;
+        foreach (Collider c in cols)
+        {
+            if (c == null) continue;
+            if (c is MeshCollider mc && !mc.convex)
+            {
+                mc.enabled = false;
+                continue;
+            }
+            c.enabled = true;
+            c.isTrigger = true;
+            anyTrigger = true;
+        }
+        if (!anyTrigger)
+        {
+            var sc = gameObject.AddComponent<SphereCollider>();
+            sc.isTrigger = true;
+            sc.radius = 0.65f;
+        }
     }
 
     private void Update()
@@ -34,7 +58,7 @@ public class CoinCollectable : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (collected) return;
-        if (!other.CompareTag("Player")) return;
+        if (!IsPlayerCollider(other)) return;
 
         collected = true;
 
@@ -51,6 +75,14 @@ public class CoinCollectable : MonoBehaviour
 
         // Ødelegger mynten umiddelbart etter samling
         Destroy(gameObject);
+    }
+
+    private static bool IsPlayerCollider(Collider other)
+    {
+        if (other == null) return false;
+        if (other.CompareTag("Player")) return true;
+        return other.GetComponentInParent<PlayerMovement>() != null
+            || other.GetComponentInParent<CharacterController>() != null;
     }
 
     // Viser samlingsradius i Scene-view (PG2202-02)

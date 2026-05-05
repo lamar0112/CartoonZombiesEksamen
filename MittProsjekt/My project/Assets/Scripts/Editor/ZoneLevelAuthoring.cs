@@ -4,7 +4,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using UnityEngine.Rendering;
 
-// Quick level-art helpers for zone scenes — replace greybox with real prefabs afterward (PG2202-08 editor)
+// ZoneLevelAuthoring — små «Level Art»-hjelpere (Environment-hierarki, greybox) (PG2202-08 editor).
+// Pensum: scene-struktur før kunst-pakker dra inn.
+// Ekstra: engelske dialoger for konsistens med CartoonZombies-menyen; erstatt greybox med ekte prefabs etterpå.
 public static class ZoneLevelAuthoring
 {
     private const string EnvironmentRoot = "Environment";

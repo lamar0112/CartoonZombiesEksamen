@@ -2,8 +2,9 @@
 using UnityEditor;
 using UnityEngine;
 
-// Vi samler alle importerte pakker under ThirdParty så Assets-roten bare har «vårt» innhold — kjør menyen om noe fortsatt ligger feil.
-// Trygt å kjøre flere ganger; flytter bare mapper som ligger rett under Assets/. (PG2202-08)
+// ThirdPartyFolderSetup — flytter kjente importmapper til Assets/ThirdParty (ryddig rot).
+// Pensum: prosjektstruktur og navngiving (PG2202-08).
+// Ekstra: trygt å kjøre flere ganger; listen med mappenavn må oppdateres ved nye Asset Store-pakker.
 public static class ThirdPartyFolderSetup
 {
     private const string ThirdPartyRoot = "Assets/ThirdParty";

@@ -1,7 +1,8 @@
 using UnityEngine;
 
-// Trigger på øya — spilleren vinner når de når kisten/målet (PG2202-04)
-// Plasseres på et tomt GameObject med BoxCollider (Is Trigger = true)
+// IslandWinTrigger — seier ved mål på øy, valgfri delay og VFX (PG2202-04 trigger; PG2202-12 Win-scene).
+// Pensum: én gang-utløsning; kaller SceneLoader eller GameManager for win-flow.
+// Ekstra: forsinkelse gir tid til kamerafølelse/partikler før meny — ren polish.
 [RequireComponent(typeof(Collider))]
 public class IslandWinTrigger : MonoBehaviour
 {
@@ -28,13 +29,21 @@ public class IslandWinTrigger : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (triggered) return;
-        if (!other.CompareTag("Player")) return;
+        if (!IsPlayerCollider(other)) return;
 
         triggered = true;
         Debug.Log("[IslandWin] Spilleren nådde kisten — vinner spillet!");
 
         // Kjør vinn-sekvens med forsinkelse via Coroutine (PG2202-08)
         StartCoroutine(WinSequence());
+    }
+
+    // Spilleren kan ha CharacterController på rot og mesh-collider på barn uten «Player»-tag.
+    private static bool IsPlayerCollider(Collider other)
+    {
+        if (other == null) return false;
+        if (other.CompareTag("Player")) return true;
+        return other.GetComponentInParent<PlayerHealth>() != null;
     }
 
     private System.Collections.IEnumerator WinSequence()

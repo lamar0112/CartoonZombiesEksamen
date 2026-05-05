@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// Verdensrom-HUD over zombien — fyll viser gjenværende HP (PG2202-08).
+// ZombieHealthBarWorld — World Space Canvas + Image fill over zombie (PG2202-08 UI i 3D-verden).
+// Pensum: abonnerer på ZombieHealth.OnHealthChanged; billboards mot kamera der implementert.
+// Ekstra: bygges i kode for rask iterasjon — kan prefabes senere hvis dere vil style i Inspector.
 [RequireComponent(typeof(ZombieHealth))]
 public class ZombieHealthBarWorld : MonoBehaviour
 {

@@ -1,12 +1,11 @@
 using UnityEngine;
 
-// Usynlig trigger-sone som laster neste sone når spilleren går gjennom (PG2202-04 kollisjon)
-// Legg denne på et tomt GameObject med en BoxCollider (Is Trigger = true)
+// ZoneTrigger — OnTriggerEnter + betingelser før SceneLoader (PG2202-04 trigger/collider).
+// Pensum: CompareTag("Player"); valgfrie gates for progresjon (zombier, oppdrag).
+// Ekstra: parkour- og båt-krav er «spilldesign» utover minimumspensum — forklar i rapport hvorfor gating gir bedre flyt.
 //
-// Tre valgfrie betingelser (alle må være oppfylt for at trigger skal fyre):
-//  • requireAllZombiesDead      — alle zombier i scenen er drept
-//  • requireBothParkourZones    — CityParkourManager melder at begge parkour-soner er fullført (by-scene)
-//  • requireBoatUnlocked        — BoatUnlockSystem melder at båten er låst opp (strand-scene)
+// Oppsett: tomt GameObject, BoxCollider Is Trigger = true. Valgfrie flags:
+//   requireAllZombiesDead, requireBothParkourZones (CityParkourManager), requireBoatUnlocked (BoatUnlockSystem).
 [RequireComponent(typeof(Collider))]
 public class ZoneTrigger : MonoBehaviour
 {

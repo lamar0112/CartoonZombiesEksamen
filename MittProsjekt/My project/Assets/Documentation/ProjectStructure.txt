@@ -1,0 +1,37 @@
+Cartoon Zombies — Unity project layout (English naming)
+=======================================================
+
+This document describes top-level folders under Assets/ for examiners and collaborators.
+Gameplay code comments in .cs files are written in Norwegian (course language) with PG2202 references.
+Runtime scripts use a short header pattern: what the script does, then “Pensum:” (course topics) and “Ekstra:” (non-course choices and why), so the exam report can cite code comments directly.
+Editor tools: Norwegian file-top explanation; menu item strings stay in English where they are part of the “English project UI” convention (some repair dialogs may stay Norwegian for the group).
+
+Assets/
+  Audio/              Custom audio clips for this game (not third-party packs).
+  Boats/              Boat-related assets and demo content.
+  Documentation/    This file, FREMGANGSMATE_Spawns_Admin_Navigasjon.txt (spawns, tuning, NavMesh tips).
+  Materials/          Project materials (URP Lit, etc.).
+  Prefabs/            Gameplay prefabs: Player/, Zombies/, GameManager.
+  Scenes/             MainMenu, Level01_By, Level02_StrandSkog, GameOver, Win.
+  ScriptableObjects/  WaveData, CheatMenuSettings, and other ScriptableObject assets.
+  Scripts/            All C# for this game:
+                        Core/     Game flow, missions, zones, saves, scene names
+                        AI/       Zombie FSM, NavMesh, civilians
+                        Player/   Movement, shooting, health, camera follow
+                        Vehicle/  Drivable car
+                        UI/       HUD, menus, cheat overlay, compass
+                        Misc/     Pickups, triggers, audio singleton, water checks
+                        Editor/   Menu tools under CartoonZombies/* (developer only)
+  Settings/           URP / project settings assets linked from Unity.
+  ThirdParty/         Imported Asset Store and external packs (do not edit vendor content).
+  UnityTechnologies/  Unity sample content if present.
+
+Scene hierarchy convention (level scenes)
+-----------------------------------------
+  GameplaySystems     UI, managers, spawners, audio listeners tied to gameplay
+  EnvironmentArt      World meshes, terrain groups, props (from asset packs)
+
+Legacy Norwegian root names (Spill_Systemer, Miljo, …) are renamed when running:
+  CartoonZombies → Organize → 1 Cleanup hierarchy (active scene)
+
+Build order: see Project Settings → Scenes in Build (MainMenu first).

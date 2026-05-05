@@ -11,6 +11,10 @@ using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System.Linq;
 
+// SceneSetupTool — store editor-funksjoner for å rigge scener (lys, kamera, UI, NavMesh-hjelp, TMP).
+// Kommentarer på norsk; menytekster og innebygd hjelp på engelsk der det er spiller-synlig eller standard Unity-meny.
+// Pensum: SceneManager, prefab-referanser, UI Canvas/TMP (PG2202-08), NavMesh (PG2202-AI).
+// Ekstra: mange «one click»-operasjoner — utviklingstid; beskriv i rapport at dette ikke er runtime-kode.
 public class SceneSetupTool
 {
     private const string MainMenuKeybindHelpText =
@@ -118,7 +122,7 @@ public class SceneSetupTool
     private static bool WaterNavMeshAndRebakeValidate() => !Application.isPlaying;
 
     /// <summary>Veier under EnvironmentArt har ofte bare MeshRenderer — uten dette faller spilleren gjennom.</summary>
-    [MenuItem("CartoonZombies/Scenes/Fix ENVIRONMENTART mesh colliders (Veier, bygg)", false, 33)]
+    [MenuItem("CartoonZombies/Scenes/Fix ENVIRONMENTART mesh colliders (roads, buildings)", false, 33)]
     public static void FixEnvironmentArtMeshColliders()
     {
         GameObject env = GameObject.Find("EnvironmentArt");
@@ -136,7 +140,7 @@ public class SceneSetupTool
             "MeshCollider (eller BoxCollider-fallback) lagt på objekter under EnvironmentArt som manglet Collider.\nLagre scenen (Ctrl+S).", "OK");
     }
 
-    [MenuItem("CartoonZombies/Scenes/Fix ENVIRONMENTART mesh colliders (Veier, bygg)", true)]
+    [MenuItem("CartoonZombies/Scenes/Fix ENVIRONMENTART mesh colliders (roads, buildings)", true)]
     private static bool FixEnvironmentArtMeshCollidersValidate() => !Application.isPlaying;
 
     [MenuItem("CartoonZombies/Scenes/Strip vegetation MeshColliders (trees — active scene)", false, 34)]

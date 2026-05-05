@@ -1,12 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// Pil mot siste zombie (når én gjenstår), eller mot ZoneTrigger når alle bølger er ferdig (PG2202-08).
+// EnemyCompassHUD — UI-pil mot mål: MissionManager, siste zombie, utgang, ZoneTrigger (PG2202-08 UI; PG2202-02 løs kobling).
+// Pensum: RectTransform-rotasjon mot world-posisjon; skjul når ingen mål.
+// Ekstra: prioriteringskjede (oppdrag → zombie → exit) gir tydelig veiledning utover ren «nearest enemy».
 [DisallowMultipleComponent]
 public class EnemyCompassHUD : MonoBehaviour
 {
     [SerializeField] private RectTransform arrow;
     [SerializeField] private CanvasGroup canvasGroup;
+    [Tooltip("Skalerer pil-UI for bedre lesbarhet (påvirker ikke din TMP-HUD).")]
+    [SerializeField] private float arrowVisualScale = 1.35f;
 
     private ZombieSpawner _spawner;
     private Transform     _player;
@@ -19,6 +23,8 @@ public class EnemyCompassHUD : MonoBehaviour
             canvasGroup.blocksRaycasts = false;
             canvasGroup.interactable     = false;
         }
+        if (arrow != null && !Mathf.Approximately(arrowVisualScale, 1f))
+            arrow.localScale = new Vector3(arrowVisualScale, arrowVisualScale, 1f);
         ResolveRefs();
     }
 
@@ -33,10 +39,12 @@ public class EnemyCompassHUD : MonoBehaviour
             return;
         }
 
-        // Mission arrow must work even if ZombieSpawner is missing or not configured yet.
+        // Oppdragspil må virke selv om ZombieSpawner mangler eller ikke er konfigurert ennå.
         Transform target = null;
         if (_missionTarget != null)
             target = _missionTarget;
+        else if (MissionManager.Instance != null && MissionManager.Instance.ShouldCompassPreferNearestZombie())
+            target = FindNearestLivingZombieTransform();
         else if (_spawner != null)
         {
             if (_spawner.ZombiesAlive == 1)
@@ -85,6 +93,27 @@ public class EnemyCompassHUD : MonoBehaviour
             GameObject p = GameObject.FindGameObjectWithTag("Player");
             if (p != null) _player = p.transform;
         }
+    }
+
+    private static Transform FindNearestLivingZombieTransform()
+    {
+        ZombieHealth[] all = FindObjectsByType<ZombieHealth>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Transform best = null;
+        float bestD = float.MaxValue;
+        GameObject playerGo = GameObject.FindGameObjectWithTag("Player");
+        Vector3 p = playerGo != null ? playerGo.transform.position : Vector3.zero;
+
+        foreach (ZombieHealth z in all)
+        {
+            if (z == null || z.IsDead) continue;
+            float d = Vector3.SqrMagnitude(z.transform.position - p);
+            if (d < bestD)
+            {
+                bestD = d;
+                best = z.transform;
+            }
+        }
+        return best;
     }
 
     private static Transform FindOnlyLivingZombie()

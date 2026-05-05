@@ -1,6 +1,9 @@
 using UnityEngine;
 using TMPro;
 
+// WinScreen — seiersmeny med kills/highscore (PG2202-08; PG2202-12 GameManager/SaveSystem).
+// Pensum: les tall fra singleton og PlayerPrefs; sikre kamera i meny-scene.
+// Ekstra: brukergrensesnitt-tekst på engelsk = prosjektkonvensjon for spill-UI (rapport kan forklare språkvalg).
 public class WinScreen : MonoBehaviour
 {
     [Header("Text (recommended)")]

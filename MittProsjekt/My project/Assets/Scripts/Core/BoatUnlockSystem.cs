@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-// Level02_StrandSkog — låser opp båten etter X zombie-drap
-// Abonnerer på GameManager.OnKillRegistered (Observer-pattern, PG2202-03)
-// Aktiverer båt-trigger-collider og viser melding til spilleren
+// BoatUnlockSystem — strand-nivå: tell drap, lås opp båt-trigger (PG2202-03 tilstand; PG2202-06 UnityEvent/observer mot GameManager).
+// Pensum: abonnement på kill-event; toggler GameObjects (collider/indikator).
+// Ekstra: strand-spesifikk gating — ikke i minste pensum, men gir mål før øy; forklar designvalg i rapport.
 //
 // Oppsett i Inspector:
 //  - killsRequired: antall drap (standard: 5)
@@ -31,6 +31,21 @@ public class BoatUnlockSystem : MonoBehaviour
     private bool boatUnlocked = false;
 
     public bool IsUnlocked => boatUnlocked;
+
+    /// <summary>Cheat / etter fall: lås opp uten drap-krav; sørg for at trigger kan brukes igjen.</summary>
+    public void CheatForceUnlockBoat()
+    {
+        if (boatUnlocked) return;
+        localKills = killsRequired;
+        UnlockBoat();
+    }
+
+    /// <summary>Hvis båten allerede er opplåst men trigger ble skrudd av — skru på igjen (f.eks. etter respawn-feil).</summary>
+    public void EnsureInteractableIfUnlocked()
+    {
+        if (!boatUnlocked) return;
+        SetBoatLocked(false);
+    }
 
     private void Start()
     {

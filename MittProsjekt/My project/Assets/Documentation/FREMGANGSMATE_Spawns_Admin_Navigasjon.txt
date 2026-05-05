@@ -1,0 +1,77 @@
+Cartoon Zombies — fremgangsmåte (spawns, admin, navigasjon, kiste)
+====================================================================
+Språk: norsk forklaring til gruppa / rapport. Prosjektnavn og menyer kan være på engelsk.
+
+1) To måter å «justere spillet»: Editor vs Hierarchy (runtime)
+----------------------------------------------------------------
+A) CartoonZombies → Settings (GameSettingsWindow)
+   - Endrer WaveData, lyd, prefab-felt på DISK (assets). Bra før innlevering og for faste verdier.
+
+B) RuntimeHierarchyTuning (NY) — i selve scenen
+   - Hierarchy: GameplaySystems → Create Empty → navn f.eks. «RuntimeTuning»
+   - Add Component → RuntimeHierarchyTuning
+   - Play Mode: trykk F10 → panel med sliders for:
+       • Zombie → player skade-multiplikator
+       • Player skudd → zombie-multiplikator
+       • ZombieSpawner: scatter-radius, «wide map»-sjanse, minimum antall levende zombier
+   - «Bruk verdier nå» oppdaterer GameBalance + spawner i denne økta.
+   - I rapport: skriv at dere har BEGGE: editor-vindu for assets + runtime-panel for rask playtest (PG2202-08 ScriptableObject + enkel UI).
+
+2) Hvor endrer du spawns (spiller + zombier)?
+---------------------------------------------
+Spiller startposisjon
+   - Velg Player i Hierarchy → Transform Position i Level01_By / Level02_StrandSkog.
+   - Alternativt: flytt «PlayerSpawn» / tomt objekt dere bruker som referanse og snap i PlayerMovement (GroundLevelReference / raycast-snap).
+
+Zombier (antall, hvor ofte, hvor)
+   - Finn GameObject med ZombieSpawner (ofte under GameplaySystems).
+   - Inspector:
+       • Waves: liste med WaveData — hvert element = én «bølge»: zombieCount, spawnInterval, prefab(er).
+       • Spawn points: tomme GameObjects plassert der dere vil ha «anker» for spawns. Tom liste = spawn ved spawnerens egen transform.
+       • randomSpawnScatterRadius: hvor langt fra ankert punkt (XZ).
+       • wideMapScatterChance / wideMapScatterSampleRadius: større spredning på hele kartet (krever NavMesh).
+       • minimumZombiesAlive + topUpInterval: holder antall zombier oppe mellom bølger.
+   - WaveData ligger som assets under Assets/ScriptableObjects/Waves/ — samme tall kan redigeres i CartoonZombies → Settings → Waves-fanen.
+   - KODE (ny): spawner prøver å unngå punkter der raycast ned treffer vann-collider — hvis zombier fortsatt hamner i vann, er NavMesh bakt PÅ vannflaten → fiks i editor (se pkt 4).
+
+3) Mission-pil og rekkefølge (uten å endre din HUD-TMP)
+---------------------------------------------------------
+   - MissionManager → Missions[]: for HVERT oppdrag setter dere «Arrow Target» (Transform) til tomme objekter i scenen:
+       Oppdrag 1: tomt objekt ved pistol / WeaponPickup
+       Oppdrag 2: valgfritt tomt — uten pil bruker kompass NÆRMESTE zombie når trigger = KillCountReached (NY logikk)
+       Oppdrag 3: tomt ved bil / CarInteraction
+       Parkour: tomme ved sone 1 / sone 2 / utgang etter deres design
+   - EnemyCompassHUD: feltet «Arrow Visual Scale» (NY) gjør pilen større uten å røre tekst-HUD.
+   - Pil prioriterer: MissionManager sitt mål → (ny) nærmeste zombie på «drep X»-steg → siste zombie → utgang.
+
+4) Navigasjon i skog/strand — det dere så på screenshots
+----------------------------------------------------------
+   - Objekter på «UI»-layer som miljø: flytt til Default eller egen «Environment»-layer. UI-layer er feil for 3D-mesher.
+   - Grass/flower uten Collider: spiller faller gjennom — legg MeshCollider (convex av/på etter behov) eller BoxCollider på «gulv»-fliser dere går på.
+   - NavMesh: Window → AI → Navigation → Bake. Marker kun walkable mesh/terrain som Navigation Static; IKKE vann.
+   - Terrain: «Enable Tree Colliders» kan gjøre skogen nesten umulig for NavMeshAgent — vurder av eller tynnere trær.
+   - ZombieSpawner: senk wideMapScatterChance og minimumZombiesAlive i strand-scenen hvis horde presser AI ut i vann.
+
+5) Bil — mindre «fly», respawn
+------------------------------
+   - CarController: «Extra Down Force While Driving» (NY) trekker bilen nedover under kjøring.
+   - Båt: huk av «Aquatic Vehicle» på båtens CarController for lavere fart og mer demping.
+   - Legg VehicleRespawnHelper på bil OG båt. Tast B (standard) når ingen sitter i kjøretøyet = flytt tilbake til «hjem»-pos (Awake-pos eller dra inn Home Transform).
+   - Etter F ut av bil/båt: spiller roteres opp rett + animator-floats nullstilles (mot «ligger igjen»-glitch).
+
+6) Båt låst / trigger borte etter fall i vann
+----------------------------------------------
+   - BoatUnlockSystem: knapp «Unlock boat» + «Fix boat triggers» i CheatMenu (Y) kaller EnsureInteractableIfUnlocked.
+   - Sjekk i Inspector at boatTriggerObject peker på riktig trigger etter endringer i scene.
+
+7) Kiste / seier
+----------------
+   - IslandWinTrigger: aksepterer nå treff på barn-collider med PlayerHealth i forelder (NY) — sjekk at kisten har trigger-collider og ikke er deaktivert.
+   - Spiller-root bør ha tag «Player»; hvis ikke, fungerer likevel med PlayerHealth på forelder.
+
+8) Cheat-meny (Y) — utvidet
+---------------------------
+   God mode, noclip (mus roterer spiller i noclip via CameraFollow), heal, kill all, give gun, skip zone,
+   jump to car mission (kun meningen i by), finish all missions, unlock/fix boat, respawn vehicles.
+
+Hvis noe er uklart: ta med Console-logg + screenshot av MissionManager-rekkefølge til veileder.

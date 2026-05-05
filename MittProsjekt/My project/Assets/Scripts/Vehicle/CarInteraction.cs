@@ -1,6 +1,8 @@
 using UnityEngine;
 
-// Håndterer inn og ut av bil - spilleren trykker F for å entre/forlate (PG2202-04)
+// CarInteraction — trigger-sone / avstand for F: sett spiller som barn ved sete, skjul mesh, slå av PlayerMovement (PG2202-04, PG2202-02 GetComponent).
+// Pensum: enkel interaksjon med tast; CharacterController må disables når spiller parentes til bil for å unngå dobbel kollisjon.
+// Ekstra: kaller CarController.SetZombieCollisionsIgnored — se CarController for begrunnelse (horde vs bil-fysikk).
 public class CarInteraction : MonoBehaviour
 {
     [SerializeField] private float        interactRange = 4.75f;
@@ -59,9 +61,9 @@ public class CarInteraction : MonoBehaviour
             if (blocked)
                 InteractionHint.Instance.Hide();
             else if (!playerInCar && dist <= interactRange)
-                InteractionHint.Instance.Show("[F] Enter car  ·  WASD to drive");
+                InteractionHint.Instance.Show("[F] Sett deg inn i bilen  ·  WASD når du kjører");
             else if (playerInCar)
-                InteractionHint.Instance.Show("Driving: WASD / arrows  ·  Space = brake  ·  [F] exit");
+                InteractionHint.Instance.Show("Kjører: WASD / piler  ·  Mellomrom = brems  ·  [F] gå ut");
             else
                 InteractionHint.Instance.Hide();
         }
@@ -95,6 +97,7 @@ public class CarInteraction : MonoBehaviour
         if (cf != null) { cf.SetTarget(transform); cf.SetVehicleMode(true); }
 
         carController.IsOccupied = true;
+        carController.SetZombieCollisionsIgnored(true);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
 
@@ -107,9 +110,22 @@ public class CarInteraction : MonoBehaviour
         playerInCar = false;
 
         player.position = transform.position + transform.right * 2.5f + Vector3.up * 0.5f;
+        // Unngå «ligger ned»-glitch: rett opp rotasjon (båt/bil kan ha skrå sete-transform).
+        Vector3 euler = player.eulerAngles;
+        player.rotation = Quaternion.Euler(0f, euler.y, 0f);
 
         if (playerMovement   != null) playerMovement.enabled   = true;
         if (playerController != null) playerController.enabled = true;
+
+        // Nullstill enkel locomotion-animator etter kjøring (hvis ithappy/Synty bruker blend trees).
+        var locomotionAnimator = player.GetComponentInChildren<Animator>(true);
+        if (locomotionAnimator != null)
+        {
+            locomotionAnimator.SetFloat("Hor", 0f);
+            locomotionAnimator.SetFloat("Vert", 0f);
+            locomotionAnimator.SetFloat("State", 0f);
+            locomotionAnimator.SetBool("IsJump", false);
+        }
 
         // Vis spillerkroppen igjen
         SetPlayerVisible(true);
@@ -119,7 +135,10 @@ public class CarInteraction : MonoBehaviour
         if (cf != null) { cf.SetVehicleMode(false); cf.SetTarget(player); }
 
         if (carController != null)
+        {
+            carController.SetZombieCollisionsIgnored(false);
             carController.IsOccupied = false;
+        }
     }
 
     private void SetPlayerVisible(bool on)

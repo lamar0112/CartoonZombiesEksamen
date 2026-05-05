@@ -2,9 +2,10 @@
 using UnityEditor;
 using UnityEngine;
 
-// Tree_a / Tree_b er Tree Creator-prefaber. Unity Terrain forventer Nature/Soft Occlusion på slike trær;
-// med URP Lit får du riktige farger, men gule advarsler i Console. Fjern Tree-komponenten når trærne
-// ikke lenger skal males på Terrain – da brukes kun MeshFilter/MeshRenderer (samme mesh som før).
+// IslandTreeTerrainWarningFix — fjerner Tree Creator-komponent fra Island-prefabs for å slippe Soft Occlusion-varsel (URP).
+// Pensum: forståelse for prefab vs terrain; bygg ikke inn i standalone.
+// Ekstra: løser importeringsstøy fra tredjeparts øy-assets; dialogtekst kan være norsk eller engelsk — her bevares forklaring til gruppa.
+// Tree_a / Tree_b: etter strip brukes MeshFilter/MeshRenderer som før når trær ikke males på terrain.
 public static class IslandTreeTerrainWarningFix
 {
     const string TreeA = "Assets/ThirdParty/Island/Prefabs/Tree_a.prefab";

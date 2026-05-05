@@ -1,18 +1,17 @@
 using UnityEngine;
 
-/// <summary>
-/// Finner rot-objekt for by- og strand-nivå uten hardkoding til gamle procedural-navn.
-/// Legg egne hierarchy-navn øverst i kandidatlistene.
-/// </summary>
+// LevelMapRootResolver — GameObject.Find mot liste av mulige rot-navn (by/strand) (PG2202-01 scene-struktur).
+// Pensum: unngår én hardkodet streng når kart bygges på nytt i editor.
+// Ekstra: legg nye rot-navn øverst i tabellene ved behov; dokumenter i rapport hvis dere endrer procedural output.
 public static class LevelMapRootResolver
 {
-    /// <summary>Navn som brukes når «Rebuild procedural CITY» kjøres (nytt kart).</summary>
+    // Rot etter «Rebuild procedural CITY» (editor-verktøy).
     public const string ProceduralCityRootName = "CityMap";
 
-    /// <summary>Navn som brukes når «Rebuild procedural BEACH» kjøres (nytt kart).</summary>
+    // Rot etter «Rebuild procedural BEACH».
     public const string ProceduralBeachRootName = "BeachMap";
 
-    /// <summary>Første <see cref="GameObject.Find"/> som treffer.</summary>
+    // Første treff med Find — rekkefølge betyr noe.
     public static readonly string[] CityMapRootCandidates =
     {
         "CityMap",

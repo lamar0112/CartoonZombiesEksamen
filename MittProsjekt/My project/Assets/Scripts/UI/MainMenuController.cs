@@ -1,7 +1,9 @@
 using UnityEngine;
 using TMPro;
 
-// Håndterer startmenyen - første skjerm spilleren ser (krav 6 i eksamen)
+// MainMenuController — startmeny med highscore og valgfritt panel for tastatur (PG2202-08 UI, eksamenskrav 6: gameplay starter ikke før spiller velger).
+// Pensum: TextMeshPro, Canvas-objekter i scenen; AudioManager for meny-musikk (PG2202-10).
+// Ekstra: engelsk hjelpetekst når ingen score finnes — bevisst for internasjonale assets; spilltekst ellers kan være norsk i scenen.
 public class MainMenuController : MonoBehaviour
 {
     [Header("UI")]

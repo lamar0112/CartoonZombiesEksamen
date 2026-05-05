@@ -1,16 +1,34 @@
 using UnityEngine;
 
-// Enkel Rigidbody-basert bilkontroller for Zone 2 (City)
-// Bruker ikke WheelCollider - for komplisert for dette prosjektet
-// Rigidbody er standard Unity-komponent for fysikkbasert bevegelse (PG2202-04)
+// CarController — enkel bil med Rigidbody (PG2202-04: kraft i FixedUpdate, ikke WheelCollider for enkelhets skyld).
+// Pensum: AddForce med Acceleration; constraints mot velting; Input-aksler + tast fallback (PG2202-02).
+// Ekstra: motor rettes i XZ-plan (skrå mesh forward); Physics.IgnoreCollision mot alle ZombieHealth-hierarkier når spiller sitter i bil —
+// hindrer at horden skyver bilen (gameplay-valg, ikke i lærebokas «enkle kube-eksempel»).
 [RequireComponent(typeof(Rigidbody))]
 public class CarController : MonoBehaviour
 {
     [Header("Driving")]
-    [SerializeField] private float motorForce  = 5600f; // må være sterk nok mot friksjon / små kollisjoner
+    [Tooltip("Akselerasjon i m/s² (ForceMode.Acceleration — uavhengig av masse og friksjon).")]
+    [SerializeField] private float motorForce  = 14f;   // m/s² akselerasjon — bytt ikke til 5600
     [SerializeField] private float brakeForce  = 3000f;
     [SerializeField] private float maxSteer    = 30f;   // maks svingvinkel i grader
     [SerializeField] private float maxSpeed    = 20f;   // maks hastighet m/s
+
+    [Header("Stabilitet")]
+    [Tooltip("Ekstra nedover-kraft når noen kjører — holder hjulene bedre på bakken (PG2202-04 Rigidbody).")]
+    [SerializeField] private float extraDownForceWhileDriving = 28f;
+    [Tooltip("Sant for båt: lavere toppfart og mer demping (samme script som bil — enklere for pensum).")]
+    [SerializeField] private bool  aquaticVehicle = false;
+
+    [Header("Aquatic (kun når aquaticVehicle er på)")]
+    [Tooltip("Toppfart m/s for båt — juster i Inspector hvis båten føles for treg eller for rask.")]
+    [SerializeField] private float aquaticMaxSpeed = 16f;
+    [Tooltip("Multiplikator på motorForce (0.9 ≈ 10 % mindre trekk).")]
+    [SerializeField] private float aquaticMotorScale = 0.9f;
+    [Tooltip("Minimum sving-faktor i lav fart — høyere = lettere å snu båten (var for lav).")]
+    [SerializeField] private float aquaticMinSteerFactor = 0.52f;
+    [Tooltip("Andel av extraDownForceWhileDriving på båt (bil trenger mer «trykk» mot bakken).")]
+    [Range(0f, 1f)] [SerializeField] private float aquaticExtraDownScale = 0.2f;
 
     [Header("Wheel transforms (visual only, not WheelCollider)")]
     [SerializeField] private Transform frontLeftWheel;
@@ -27,18 +45,40 @@ public class CarController : MonoBehaviour
     // Kan bare kjøres hvis en spiller er inne i bilen
     public bool IsOccupied { get; set; } = false;
 
+    private float _speedCap = 20f;
+    private float _motorScale = 1f;
+    private float _downForceScale = 1f;
+    private float _minSteerFactor = 0.22f;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        // Prefab kan være kinematic — da virker ikke AddForce (ingen kjøring fremover)
-        rb.isKinematic = false;
-        rb.centerOfMass = new Vector3(0f, -0.5f, 0f);
-        // Tung nok til at zombier med capsule ikke «skyver» bilen som et leketøy
-        rb.mass = Mathf.Max(rb.mass, 3200f);
+        rb.isKinematic   = false;
+        rb.centerOfMass  = new Vector3(0f, -0.5f, 0f);
+        rb.mass          = Mathf.Max(rb.mass, 3200f);
         rb.linearDamping = Mathf.Min(rb.linearDamping, 0.12f);
         rb.angularDamping = Mathf.Max(rb.angularDamping, 2.5f);
         rb.interpolation = RigidbodyInterpolation.Interpolate;
-        // Sjekker om hjul-transforms er satt — bilen kjører uansett, bare uten hjulanimasjon
+        // Hindrer bilen i å velte — viktig uten WheelColliders (PG2202-04)
+        rb.constraints   = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.useGravity = true;
+
+        _speedCap       = maxSpeed;
+        _motorScale     = 1f;
+        _downForceScale = 1f;
+        _minSteerFactor = 0.22f;
+
+        if (aquaticVehicle)
+        {
+            _speedCap       = Mathf.Min(maxSpeed, Mathf.Max(4f, aquaticMaxSpeed));
+            _motorScale     = Mathf.Clamp(aquaticMotorScale, 0.35f, 1.25f);
+            _downForceScale = Mathf.Clamp01(aquaticExtraDownScale);
+            _minSteerFactor = Mathf.Clamp(aquaticMinSteerFactor, 0.22f, 1f);
+            rb.angularDamping = Mathf.Max(rb.angularDamping, 4.5f);
+            rb.linearDamping  = Mathf.Max(rb.linearDamping, 0.28f);
+        }
+
         _hasWheels = frontLeftWheel != null || frontRightWheel != null
                   || rearLeftWheel  != null || rearRightWheel  != null;
     }
@@ -78,12 +118,43 @@ public class CarController : MonoBehaviour
         ApplySteering();
         ApplyBrake();
         ClampSpeed();
+
+        if (extraDownForceWhileDriving > 0.01f)
+            rb.AddForce(Vector3.down * (extraDownForceWhileDriving * _downForceScale), ForceMode.Acceleration);
     }
 
     private void ApplyMotor()
     {
         if (Mathf.Abs(throttleInput) < 0.01f) return;
-        rb.AddRelativeForce(Vector3.forward * throttleInput * motorForce, ForceMode.Force);
+        // Horisontal retning — skråstilt bil-mesh gir ofte forward med Y≠0 som «spiser» akselerasjon
+        Vector3 f = transform.forward;
+        f.y = 0f;
+        if (f.sqrMagnitude < 1e-6f) f = rb.transform.forward;
+        f.y = 0f;
+        if (f.sqrMagnitude < 1e-6f) return;
+        f.Normalize();
+        rb.AddForce(f * throttleInput * motorForce * _motorScale, ForceMode.Acceleration);
+    }
+
+    /// <summary>Ignorer kollisjon mellom alle bil-kollidere og alle zombie-kollidere (unngå at horden skyver bilen).</summary>
+    public void SetZombieCollisionsIgnored(bool ignore)
+    {
+        Collider[] carCols = GetComponentsInChildren<Collider>();
+        if (carCols == null || carCols.Length == 0) return;
+
+        foreach (ZombieHealth zh in Object.FindObjectsByType<ZombieHealth>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (zh == null) continue;
+            foreach (Collider zc in zh.GetComponentsInChildren<Collider>())
+            {
+                if (zc == null) continue;
+                foreach (Collider cc in carCols)
+                {
+                    if (cc == null) continue;
+                    Physics.IgnoreCollision(cc, zc, ignore);
+                }
+            }
+        }
     }
 
     private void ApplySteering()
@@ -91,7 +162,7 @@ public class CarController : MonoBehaviour
         // Roterer bilen basert på hastighet - svinger bedre ved høy fart
         float speed = rb.linearVelocity.magnitude;
         // Litt sving også i lav fart (ellers «låst» når man prøver å snu på stedet)
-        float steerFactor = Mathf.Max(0.22f, Mathf.Clamp01(speed / 5f));
+        float steerFactor = Mathf.Max(_minSteerFactor, Mathf.Clamp01(speed / 5f));
         float steerAmount = steerInput * maxSteer * steerFactor;
         rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, steerAmount * Time.fixedDeltaTime * 30f, 0f));
     }
@@ -107,8 +178,8 @@ public class CarController : MonoBehaviour
     private void ClampSpeed()
     {
         // Begrenser toppfart
-        if (rb.linearVelocity.magnitude > maxSpeed)
-            rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
+        if (rb.linearVelocity.magnitude > _speedCap)
+            rb.linearVelocity = rb.linearVelocity.normalized * _speedCap;
     }
 
     // Roterer hjul-meshene visuelt (ikke funksjonell fysikk, kun for utseende)

@@ -4,8 +4,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Sorts content under EnvironmentArt into category folders (Undo). Does not delete objects.
-// Gameplay components (coins, zone triggers, etc.) move under GameplaySystems.
+// EnvironmentArtSortTool — sorterer barn under EnvironmentArt i kategorimapper (Undo); flytter gameplay til GameplaySystems.
+// Pensum: ryddig scene-hierarki (PG2202-01); engelske kategorinavn = prosjektkonvensjon.
+// Ekstra: automatisk sortering etter import — reduserer manuelt rot; meny på engelsk.
 // Menu: CartoonZombies → Organize → …
 public static class EnvironmentArtSortTool
 {

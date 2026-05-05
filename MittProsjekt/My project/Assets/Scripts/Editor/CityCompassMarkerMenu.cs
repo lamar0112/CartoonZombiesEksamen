@@ -3,6 +3,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+// CityCompassMarkerMenu — legger inn CompassObjectiveMarker for utgangspil (PG2202-08 HUD-støtte).
+// Pensum: ett tomt objekt + script; flyttes i Scene view.
+// Ekstra: meny for rask plassering; DisplayDialog på norsk her er OK for intern gruppehjelp.
 public static class CityCompassMarkerMenu
 {
     [MenuItem("CartoonZombies/Level Art/Add Compass exit marker (HUD arrow target)", false, 103)]

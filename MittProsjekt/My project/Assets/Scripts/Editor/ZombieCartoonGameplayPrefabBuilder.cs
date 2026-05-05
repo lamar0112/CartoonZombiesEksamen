@@ -3,8 +3,10 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 
-// Lager spillklare varianter av ArtStore3D «Zombie Cartoon» (NavMesh + ZombieAI + helse + Supercyan Animator)
-// Originalprefabene mangler gameplay-komponenter og har ikke Animator Controller — dette er nødvendig for spawneren.
+// ZombieCartoonGameplayPrefabBuilder — editor: lager gameplay-prefabs fra Art Store «Zombie Cartoon» + NavMeshAgent + våre scripts.
+// Pensum: forbereder fiender til ZombieSpawner (PG2202-AI agent, PG2202-02 prefab-pipeline).
+// Ekstra: tredjeparts animator controller og VFX-sti — ikke pensum; dialog/meny på engelsk = prosjektkonvensjon.
+// Originalprefabene mangler gameplay-komponenter og Animator Controller — nødvendig for spawneren.
 public static class ZombieCartoonGameplayPrefabBuilder
 {
     const string ControllerPath =
@@ -110,6 +112,8 @@ public static class ZombieCartoonGameplayPrefabBuilder
         cap.height = 1.8f;
         cap.radius = 0.3f;
         cap.center = new Vector3(0f, 0.9f, 0f);
+
+        root.tag = "Zombie";
     }
 
     static void RegisterWaveVariants(GameObject[] variants)

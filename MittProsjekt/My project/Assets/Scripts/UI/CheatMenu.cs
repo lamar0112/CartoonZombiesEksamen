@@ -1,8 +1,10 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-// Cheat-meny for sensor/eksaminator - eksamen anbefaler dette eksplisitt (PG2202-12 FAQ)
-// Trykk Y for å åpne/lukke. Bruker OnGUI for enkel, panel-uavhengig visning.
+// CheatMenu — OnGUI-basert meny for sensor (PG2202-12 tips: cheat for å vise resten av spillet; IMGUI er enkel og uavhengig av Canvas).
+// Pensum: Time.timeScale pause; Input.GetKeyDown; kall til GameManager / MissionManager / ZombieHealth.
+// Ekstra: noclip (midlertidig CharacterController av) og ScriptableObject CheatMenuSettings for felles tuning — ikke pensum, men ryddig for gruppearbeid.
 public class CheatMenu : MonoBehaviour
 {
     public static CheatMenu Instance { get; private set; }
@@ -15,6 +17,7 @@ public class CheatMenu : MonoBehaviour
     public  bool IsCheatMenuOpen => isOpen;
     public  bool IsGodMode    { get; private set; } = false;
     private bool noclipActive = false;
+    public  bool IsNoclipActive => noclipActive;
 
     [Header("Tuning (optional)")]
     [Tooltip("Dra inn Assets/ScriptableObjects/CheatMenuSettings — felles for gruppa.")]
@@ -83,21 +86,34 @@ public class CheatMenu : MonoBehaviour
 
         InitStyles();
 
-        float w   = 260f;
-        float h   = 340f;
+        float w   = 300f;
+        float h   = 520f;
         float x   = (Screen.width  - w) * 0.5f;
         float y   = (Screen.height - h) * 0.5f;
-        float bh  = 44f;   // button height
-        float gap = 50f;   // vertical gap
+        float bh  = 36f;
+        float gap = 40f;
 
         GUI.Box(new Rect(x, y, w, h), "  CHEAT MENU  [Y]", boxStyle);
 
-        float by = y + 50f;
-        if (GUI.Button(new Rect(x + 10, by,         w - 20, bh), $"God mode: {(IsGodMode    ? "ON" : "OFF")}",  btnStyle)) OnGodModeClicked();
-        if (GUI.Button(new Rect(x + 10, by + gap,   w - 20, bh), $"Noclip:   {(noclipActive ? "ON" : "OFF")}",  btnStyle)) OnNoclipClicked();
-        if (GUI.Button(new Rect(x + 10, by + gap*2, w - 20, bh), "Full health",                                     btnStyle)) OnHealClicked();
-        if (GUI.Button(new Rect(x + 10, by + gap*3, w - 20, bh), "Kill all zombies",                              btnStyle)) OnKillAllClicked();
-        if (GUI.Button(new Rect(x + 10, by + gap*4, w - 20, bh), "Skip to next zone →",                         btnStyle)) OnSkipZoneClicked();
+        float by = y + 44f;
+        int i = 0;
+        void Row(string label, System.Action act)
+        {
+            if (GUI.Button(new Rect(x + 10, by + gap * i, w - 20, bh), label, btnStyle)) act();
+            i++;
+        }
+
+        Row($"God mode: {(IsGodMode ? "ON" : "OFF")}", OnGodModeClicked);
+        Row($"Noclip: {(noclipActive ? "ON" : "OFF")}", OnNoclipClicked);
+        Row("Full health", OnHealClicked);
+        Row("Kill all zombies", OnKillAllClicked);
+        Row("Give gun (enable shooting)", OnGiveGunClicked);
+        Row("Skip to next zone →", OnSkipZoneClicked);
+        Row("Jump to car mission (city only)", OnJumpToCarMissionClicked);
+        Row("Finish ALL missions (hide panel)", OnFinishAllMissionsClicked);
+        Row("Unlock boat (strand)", OnUnlockBoatClicked);
+        Row("Respawn all vehicles (B-home)", OnRespawnVehiclesClicked);
+        Row("Fix boat triggers if stuck", OnFixBoatTriggersClicked);
     }
 
     private void InitStyles()
@@ -157,6 +173,48 @@ public class CheatMenu : MonoBehaviour
     public void OnHealClicked()
     {
         playerHealth?.Heal(9999);
+    }
+
+    private void OnGiveGunClicked()
+    {
+        ResolvePlayerReferences();
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+        var shoot = player.GetComponentInChildren<PlayerShooting>(true);
+        shoot?.CheatEnableWeapon();
+    }
+
+    private void OnJumpToCarMissionClicked()
+    {
+        if (SceneManager.GetActiveScene().name != "Level01_By") return;
+        // Oppdrag 3 i UI = «bil» (0=pistol, 1=kills, 2=bil) — 0-basert indeks 2.
+        MissionManager.Instance?.JumpTo(2);
+    }
+
+    private void OnFinishAllMissionsClicked()
+    {
+        MissionManager.Instance?.CheatMarkAllMissionsComplete();
+    }
+
+    private void OnUnlockBoatClicked()
+    {
+        var boat = Object.FindFirstObjectByType<BoatUnlockSystem>();
+        if (boat == null) return;
+        if (!boat.IsUnlocked)
+            boat.CheatForceUnlockBoat();
+        boat.EnsureInteractableIfUnlocked();
+    }
+
+    private void OnRespawnVehiclesClicked()
+    {
+        foreach (var v in Object.FindObjectsByType<VehicleRespawnHelper>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            v.RespawnToHome();
+    }
+
+    private void OnFixBoatTriggersClicked()
+    {
+        var boat = Object.FindFirstObjectByType<BoatUnlockSystem>();
+        boat?.EnsureInteractableIfUnlocked();
     }
 
     // Ved lukk: respekter ESC-pause (Paused) så spillet ikke starter mens pausemeny fortsatt er aktiv

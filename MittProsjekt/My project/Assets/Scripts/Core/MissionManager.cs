@@ -4,9 +4,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Sekvensielle oppdrag med pil mot mål (PG2202-08 UI, PG2202-03 Observer)
-// Heng dette scriptet på GameplaySystems i scenen.
-// Konfigurer missions[] i Inspector med tekst og mål-Transform.
+// MissionManager — sekvensielle oppdrag med TMP-tekst og valgfri kompass-pil (PG2202-08 Canvas/TMP, PG2202-05 beslutningstrigger).
+// Pensum: Scriptable/serialiserte data i Inspector; observer-lignende kobling til CityParkourManager og GameManager drapstall.
+// Ekstra: flere CompleteTrigger-typer (båt, parkour, kill count) — dokumenter i rapport hvordan hvert nivå bruker dem.
 public class MissionManager : MonoBehaviour
 {
     public static MissionManager Instance { get; private set; }
@@ -103,14 +103,14 @@ public class MissionManager : MonoBehaviour
             missions[1].trigger           = CompleteTrigger.KillCountReached;
             missions[1].killCountRequired = Mathf.Max(1, missions[1].killCountRequired > 0 ? missions[1].killCountRequired : 12);
             missions[1].descriptionText =
-                "Eliminate 12 zombies\n<size=80%>Waves keep looping — this step completes after <b>12 kills</b>.</size>";
+                "Drep 12 zombier\n<size=80%>Bølgene fortsetter — fullføres etter <b>12 drap</b></size>";
         }
         else if (sn == "Level02_StrandSkog")
         {
             missions[1].trigger           = CompleteTrigger.KillCountReached;
             missions[1].killCountRequired = Mathf.Max(1, missions[1].killCountRequired > 0 ? missions[1].killCountRequired : 14);
             missions[1].descriptionText =
-                "Eliminate 14 zombies\n<size=80%>Horde keeps coming — complete after <b>14 kills</b>.</size>";
+                "Drep 14 zombier\n<size=80%>Hordene fortsetter — fullføres etter <b>14 drap</b></size>";
         }
     }
 
@@ -170,6 +170,23 @@ public class MissionManager : MonoBehaviour
         ShowCurrent();
     }
 
+    /// <summary>Sant når aktivt oppdrag mangler pil men er «drep X» — kompass bruker nærmeste zombie.</summary>
+    public bool ShouldCompassPreferNearestZombie()
+    {
+        if (_allDone || missions == null || _current >= missions.Length) return false;
+        Mission m = missions[_current];
+        return m.arrowTarget == null && m.trigger == CompleteTrigger.KillCountReached;
+    }
+
+    /// <summary>Cheat: marker alle oppdrag som ferdige (skjuler panel).</summary>
+    public void CheatMarkAllMissionsComplete()
+    {
+        _allDone = true;
+        _current = missions != null ? missions.Length : 0;
+        HidePanel();
+        if (compassHud != null) compassHud.ClearMissionTarget();
+    }
+
     /// <summary>
     /// By: fullfør bare «kjør til bil»-steget når spilleren faktisk er på det steget (unngår å hoppe over bølge-oppdrag).
     /// </summary>
@@ -197,7 +214,7 @@ public class MissionManager : MonoBehaviour
         Mission m = missions[_current];
 
         // Vis nummer + beskrivelse
-        string header = $"<b>Mission {_current + 1}/{missions.Length}</b>\n";
+        string header = $"<b>Oppdrag {_current + 1}/{missions.Length}</b>\n";
         if (missionText != null)
         {
             missionText.richText = true;

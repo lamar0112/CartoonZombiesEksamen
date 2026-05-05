@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>Runtime AABB for level geometry — samme rot-navn som LevelSceneRepair / SceneSetupTool.</summary>
+// LevelWorldBoundsUtil — beregner omsluttende Bounds fra Renderer under kart-rot (PG2202-04 Renderer.bounds).
+// Pensum: brukes til spawn/foliage-klipping; samme rot-navn som editor-verktøy (EnvironmentArt, CityMap/BeachMap-kandidater).
+// Ekstra: støtter flere mulige rot-navn fordi procedural rebuild har endret navn over tid — robusthet for gruppearbeid.
 public static class LevelWorldBoundsUtil
 {
     public static bool TryGetPlayableWorldBounds(out Bounds worldBounds)

@@ -1,8 +1,8 @@
 using UnityEngine;
 
-// Våpenpickup — spilleren starter uten pistol, plukker den opp i scenen (PG2202-04 collision)
-// Legg dette scriptet på et synlig 3D-objekt (eks. pistol-mesh) i scenen.
-// Krav: PlayerShooting-scriptet på Player starter disabled.
+// WeaponPickup — OnTriggerEnter aktiverer PlayerShooting på spilleren (PG2202-04 trigger, sammen med MissionManager «finn pistol»).
+// Pensum: kollider som trigger; valgfri lyd/VFX; enkel rotasjon/bob i Update.
+// Ekstra: raycast for bakke for å unngå at pickup-mesh klipper i terreng — vanlig polish med Kenney-mesher.
 [RequireComponent(typeof(Collider))]
 public class WeaponPickup : MonoBehaviour
 {
@@ -85,7 +85,7 @@ public class WeaponPickup : MonoBehaviour
 
         HUDController hud = Object.FindFirstObjectByType<HUDController>();
         if (hud != null)
-            hud.ShowPickupMessage("<color=#FFE066><b>Weapon found!</b></color>");
+            hud.ShowPickupMessage("<b>Pistol plukket opp!</b>  <color=#FFCC00>Venstreklikk = skyt  ·  R = reload</color>");
 
         // Informer misjonssystemet om at spilleren har plukket opp våpen
         MissionManager.Instance?.CompleteCurrent();
