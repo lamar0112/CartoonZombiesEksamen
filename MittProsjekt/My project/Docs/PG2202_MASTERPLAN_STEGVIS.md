@@ -141,7 +141,7 @@ Arbeid **ett steg av gangen**. Når ett steg er «grønt», gå til neste. Ikke 
 
 ## Steg 9 — Siste polish (valgfritt men lønnsomt)
 
-- [ ] `CartoonZombies → Fix → ★ FIX EVERYTHING` på begge level-scener (etter backup).
+- [ ] Gå gjennom begge level-scener manuelt: NavMesh-bake, spawn-punkter, HUD-kabling, kiste (**Island Win Trigger**).
 - [ ] Hierarchy: `GameplaySystems` / `EnvironmentArt`.
 - [ ] Console: fiks det dere kan; rest noteres som kjente bugs i rapport.
 

@@ -12,9 +12,18 @@ MittProsjekt/My project/[Ll]ogs/
 MittProsjekt/My project/[Uu]ser[Ss]ettings/
 MittProsjekt/My project/[Oo]bj/
 
+# Repo root is NOT the Unity project. If Unity Hub opens repo root by mistake,
+# it can generate these folders here — ignore them so they never get committed.
+/Assets/
+/Packages/
+/ProjectSettings/
+
 # Store mapper som ikke skal i spill-repo (holder push små — flytt eller fjern fra ignore hvis dere trenger dem i Git)
 Forelesningsmateriale/
 kenneykits/
+
+# macOS
+.DS_Store
 
 # Local agent / IDE metadata
 .claude/

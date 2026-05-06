@@ -8,7 +8,7 @@ public class GameSettingsWindow : EditorWindow
 {
     // Faner - bruker int-indeks som enkel state-maskin for hvilken fane som vises
     private int    selectedTab = 0;
-    private string[] tabs      = { "Audio", "Waves", "Player", "Zombies", "Cheat (dev)", "Shortcuts" };
+    private string[] tabs      = { "Audio", "Waves", "Player", "Zombies", "Cheat (dev)" };
 
     private Vector2 scrollPos;
 
@@ -56,7 +56,6 @@ public class GameSettingsWindow : EditorWindow
             case 2: DrawPlayerTab();    break;
             case 3: DrawZombieTab();    break;
             case 4: DrawCheatTab();     break;
-            case 5: DrawShortcutsTab(); break;
         }
         EditorGUILayout.EndScrollView();
     }
@@ -224,7 +223,7 @@ public class GameSettingsWindow : EditorWindow
 
         if (playerPrefab == null)
         {
-            EditorGUILayout.HelpBox("Player.prefab not found — run Setup Player Prefab.", MessageType.Error);
+            EditorGUILayout.HelpBox("Player.prefab not found — sjekk sti Assets/Prefabs/Player/Player.prefab.", MessageType.Error);
             return;
         }
 
@@ -260,7 +259,7 @@ public class GameSettingsWindow : EditorWindow
 
         if (zombiePrefab == null)
         {
-            EditorGUILayout.HelpBox("FreeZombie.prefab not found — run Setup Zombie Prefab.", MessageType.Error);
+            EditorGUILayout.HelpBox("FreeZombie.prefab not found — sjekk sti Assets/Prefabs/Zombies/FreeZombie.prefab.", MessageType.Error);
             return;
         }
 
@@ -278,51 +277,6 @@ public class GameSettingsWindow : EditorWindow
             ("attackCooldown", "Attack cooldown (sec)"),
             ("patrolRadius",   "Patrol radius (m)"),
             ("patrolWaitTime", "Wait at patrol point (sec)"));
-    }
-
-    // ─── SNARVEIER ──────────────────────────────────────────────────────────────
-
-    private void DrawShortcutsTab()
-    {
-        SectionLabel("Setup tools");
-        EditorGUILayout.HelpBox("Run editor utilities without using the top CartoonZombies menu.", MessageType.None);
-
-        EditorGUILayout.Space(8);
-        SectionLabel("Level art (open a zone scene first)");
-        EditorGUILayout.HelpBox(
-            "Creates folders / placeholder props in the active scene. Modular meshes from ThirdParty still need to be placed by hand in Scene view.",
-            MessageType.None);
-        if (GUILayout.Button("Environment — Terrain + Props parents", GUILayout.Height(26)))
-            ZoneLevelAuthoring.EnsureEnvironmentHierarchy();
-        if (GUILayout.Button("Bright cartoon lighting (sun + ambient)", GUILayout.Height(26)))
-            ZoneLevelAuthoring.ApplyBrightCartoonLighting();
-        EditorGUILayout.Space(6);
-        GUI.backgroundColor = new Color(0.3f, 1f, 0.3f);
-        if (GUILayout.Button("★ Repair BOTH level scenes", GUILayout.Height(36))) LevelSceneRepairTool.RepairBothLevelScenes();
-        GUI.backgroundColor = Color.white;
-        EditorGUILayout.Space(4);
-        if (GUILayout.Button("Repair both levels + sync Build Settings", GUILayout.Height(28))) LevelSceneRepairTool.RepairBothAndSyncBuildSettings();
-        EditorGUILayout.Space(6);
-
-        if (GUILayout.Button("01 — Zombie prefab",              GUILayout.Height(30))) ProjectSetupTool.SetupZombiePrefab();
-        if (GUILayout.Button("02 — Player tag",                 GUILayout.Height(30))) ProjectSetupTool.AddPlayerTag();
-        if (GUILayout.Button("03 — WaveData assets",            GUILayout.Height(30))) ProjectSetupTool.CreateWaveDataAssets();
-        if (GUILayout.Button("05 — Player prefab",              GUILayout.Height(30))) PlayerSetupTool.SetupPlayer();
-
-        EditorGUILayout.Space(10);
-        SectionLabel("Scene — legacy full setup (legger Floor 50×50)");
-        if (GUILayout.Button("Legacy: Full setup Level01_By",     GUILayout.Height(26))) SceneSetupTool.SetupLevel01By();
-        if (GUILayout.Button("Legacy: Full setup Level02_StrandSkog", GUILayout.Height(26))) SceneSetupTool.SetupLevel02StrandSkog();
-        if (GUILayout.Button("Setup MainMenu scene",            GUILayout.Height(28))) SceneSetupTool.SetupMainMenu();
-        if (GUILayout.Button("Re-Bake NavMesh (active scene)",  GUILayout.Height(28))) SceneSetupTool.ReBakeNavMesh();
-        if (GUILayout.Button("Fix audio + crosshair",         GUILayout.Height(28))) SceneSetupTool.FixAudioAndCrosshair();
-        if (GUILayout.Button("Add CheatMenu to active scene",   GUILayout.Height(28))) SceneSetupTool.AddCheatMenuToScene();
-
-        EditorGUILayout.Space(10);
-        SectionLabel("Fix tools");
-        if (GUILayout.Button("Add capsule collider to zombies", GUILayout.Height(28))) ProjectSetupTool.FixZombieCollider();
-        if (GUILayout.Button("Add scenes to Build Settings",    GUILayout.Height(28))) ProjectSetupTool.AddScenesToBuildSettingsMenu();
-        if (GUILayout.Button("Reset saved MasterVolume",        GUILayout.Height(28))) ProjectSetupTool.ResetVolume();
     }
 
     // ─── HJELPEMETODER ──────────────────────────────────────────────────────────

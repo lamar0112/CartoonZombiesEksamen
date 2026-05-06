@@ -185,6 +185,24 @@ public class MissionManager : MonoBehaviour
         _current = missions != null ? missions.Length : 0;
         HidePanel();
         if (compassHud != null) compassHud.ClearMissionTarget();
+
+        // I dette prosjektet er «misjoner ferdig» ofte en del av progresjons-gates.
+        // Når sensoren bruker cheat for å hoppe videre, vil vi også åpne de vanligste gate-systemene.
+
+        // By: parkour-gate som åpner strand-exit (CityParkourManager styrer beachZoneTrigger aktiv).
+        if (CityParkourManager.Instance != null && !CityParkourManager.Instance.BothAreasComplete)
+        {
+            CityParkourManager.Instance.CompleteZone(1);
+            CityParkourManager.Instance.CompleteZone(2);
+        }
+
+        // Strand/skog: båt-gate (BoatUnlockSystem) kan blokkere progresjon / interaksjon.
+        BoatUnlockSystem boat = FindFirstObjectByType<BoatUnlockSystem>();
+        if (boat != null && !boat.IsUnlocked)
+        {
+            boat.CheatForceUnlockBoat();
+            boat.EnsureInteractableIfUnlocked();
+        }
     }
 
     /// <summary>

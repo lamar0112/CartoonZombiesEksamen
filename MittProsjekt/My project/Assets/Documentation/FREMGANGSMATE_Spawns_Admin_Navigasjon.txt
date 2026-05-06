@@ -27,10 +27,21 @@ Zombier (antall, hvor ofte, hvor)
    - Finn GameObject med ZombieSpawner (ofte under GameplaySystems).
    - Inspector:
        • Waves: liste med WaveData — hvert element = én «bølge»: zombieCount, spawnInterval, prefab(er).
-       • Spawn points: tomme GameObjects plassert der dere vil ha «anker» for spawns. Tom liste = spawn ved spawnerens egen transform.
+       • Spawn points: tomme GameObjects plassert der dere vil ha «anker» for spawns.
+         Slik legger du til flere spawn-lokasjoner (raskt):
+           1) Lag et tomt GameObject i scenen: f.eks. GameplaySystems → Create Empty → navn «SpawnPoint_01»
+           2) Flytt det til ønsket posisjon på kartet (på bakken / NavMesh).
+           3) Dra det inn i ZombieSpawner → Spawn points-lista (legg til flere: _01, _02, _03…)
+         Tom liste = spawn ved spawnerens egen transform (vanlig “default” hvis dere bare vil ha én kilde).
        • randomSpawnScatterRadius: hvor langt fra ankert punkt (XZ).
        • wideMapScatterChance / wideMapScatterSampleRadius: større spredning på hele kartet (krever NavMesh).
-       • minimumZombiesAlive + topUpInterval: holder antall zombier oppe mellom bølger.
+       • minimumZombiesAlive + topUpInterval: holder antall zombier oppe mellom bølger (bra hvis du vil ha “alltid litt press”).
+         Hvis du vil ha FLERE zombier totalt:
+           - Øk WaveData.zombieCount (for store bølger)
+           - Øk minimumZombiesAlive (for jevn “horde-feel”)
+         Hvis du vil ha FÆRRE:
+           - Senk zombieCount og/eller minimumZombiesAlive
+           - Øk spawnInterval litt (langsommere)
    - WaveData ligger som assets under Assets/ScriptableObjects/Waves/ — samme tall kan redigeres i CartoonZombies → Settings → Waves-fanen.
    - KODE (ny): spawner prøver å unngå punkter der raycast ned treffer vann-collider — hvis zombier fortsatt hamner i vann, er NavMesh bakt PÅ vannflaten → fiks i editor (se pkt 4).
 
@@ -66,7 +77,10 @@ Zombier (antall, hvor ofte, hvor)
 
 7) Kiste / seier
 ----------------
-   - IslandWinTrigger: aksepterer nå treff på barn-collider med PlayerHealth i forelder (NY) — sjekk at kisten har trigger-collider og ikke er deaktivert.
+   - Legg **Island Win Trigger** på **forelder-objektet «Chest»** (rot i prefab), ikke bare på mesh-barn.
+   - Scriptet legger nå automatisk inn **BoxCollider (Is Trigger)** hvis roten mangler collider — du slipper Unity-feilen «Add Collider first».
+   - Juster på **Chest**-roten: **Auto Trigger Size** (standard ca 4×3×4) og **Proximity XZ Radius** (ca 2–3) til kista er dekket.
+   - Valgfritt: sett **Chest_bot / Chest_top** sine BoxCollider til **Is Trigger** hvis spilleren «henger fast» i kollisjon mot lokket.
    - Spiller-root bør ha tag «Player»; hvis ikke, fungerer likevel med PlayerHealth på forelder.
 
 8) Cheat-meny (Y) — utvidet

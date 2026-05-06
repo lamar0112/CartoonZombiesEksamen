@@ -1,26 +1,20 @@
 # PG2202 — arbeidslogg og status (huskeliste)
 
-**Formål:** Ett sted med sannhet om prosjektet slik at arbeid i Cursor/Unity ikke «mister» kontekst.  
-**Oppdater:** Legg inn dato + kort linje når noe endres (du eller AI).
+**Formål:** Ett sted med sannhet om prosjektet.  
+**Oppdater:** Legg inn dato + kort linje når noe endres.
 
 ---
 
-## For deg — hva betyr forespørselen din, og hva er faktisk gjort?
-
-Du ba om en **full gjennomgang**: pensum + eksamen + hele prosjektet + mapper/navn/hierarki + engelsk + studentnivå + spill + missions + «game mechanics»-mappe.
-
-**Det finnes to deler:**
+## Arbeidsflyt
 
 | Del | Hvem | Hva |
 |-----|------|-----|
-| **A) Kode, tekstfiler, PDF i repo** | Kan gjøres her (Cursor) | Leser `Forelesningsmateriale/`, eksamen-PDF, alle scripts, Build Settings, mappestruktur under `Assets/`. Skriver funn i *denne* filen + `PG2202_MASTERPLAN_STEGVIS.md`. Retter ting i `.cs` / editor-verktøy når det gir mening. |
-| **B) Unity-editoren** | **Bare du** (eller gruppa) | Hierarki-navn på objekter, prefab-inspector, faktisk Play, farger på lys, plassering av pickup, om animasjon *ser* bra ut, Windows-build, osv. Det kan jeg **ikke** se fra chat. |
+| **Repo (kode + docs)** | Versjonert i Git | Scripts under `Assets/Scripts/`, dokumentasjon i `Docs/`. |
+| **Unity-editoren** | Deg / gruppa | Scener, prefabs, NavMesh, build, visuell QA. |
 
-**Det finnes ingen mappe som heter `Game Mechanics` i prosjektet.** Spillmekanikk ligger i vanlige mapper: `Scripts/Core`, `AI`, `Player`, `UI`, `Misc`, `Vehicle`. Det er **helt OK** for eksamen — i rapporten skriver du at gameplay ligger der. Du trenger ikke lage en ny mappe med mindre lærer ber om det.
+Spillmekanikk ligger i `Scripts/Core`, `AI`, `Player`, `UI`, `Misc`, `Vehicle` — det er vanlig for PG2202.
 
-**«Ikke AI-aktig»:** Sensor ser på *din* rapport og om spillet funker. Jeg har ikke «skrevet hele spillet»; vi har justert og dokumentert. Korte, tydelige setninger i rapporten og konsekvent språk i UI hjelper mer enn fancy formuleringer.
-
-**Kort hva som allerede er gjort i dette prosjektet (Cursor):** full gjennomgang av repo + utfylt krav-tabell + liste over alle egne scripts + KI-tekst til rapport + engelsk på **nygenerert** UI i `SceneSetupTool` + tidligere gameplay-fiks (kompass, bil, zombier, misjoner, osv.). **Det som gjenstår er hovedsakelig B:** åpne Unity, teste, evt. rette tekst på knapper i scenene, bygge .exe, skrive rapport-PDF.
+**Gjenstår typisk før innlevering:** full Play-test, Windows-build med **Avslutt**, rapport-PDF (alle punkter fra eksamen), zip under 5 GB.
 
 **Symboler:** `[repo]` = bekreftet fra filer i repo · `[ ]` = må du selv verifisere i Unity / Windows-build
 
@@ -36,7 +30,7 @@ Du ba om en **full gjennomgang**: pensum + eksamen + hele prosjektet + mapper/na
 | Oppstart etter endring | `EKSAMEN_OPPSTART.md` |
 | Teknisk gjennomgang | `PG2202_PROSJEKT_GJENNOMGANG.md` |
 | **Utførelsesplan (gjør dette i rekkefølge)** | **`PG2202_UTFØRELSESPLAN.md`** |
-| **Editor-meny (CartoonZombies): hva hvert valg gjør** | **`PG2202_EDITOR_VERKTØY_KONTEKST.md`** |
+| **Editor: Settings-vindu** | **`PG2202_EDITOR_VERKTØY_KONTEKST.md`** |
 | Repo-README | `../../../README.md` |
 
 ---
@@ -86,7 +80,7 @@ Alle er **enabled: 1**. Matcher `EKSAMEN_OPPSTART.md`.
 | **3** | Egen C# | Se tabell **«Egne scripts (rapport)»** nedenfor (44 filer) | `[repo]` ✓ — lim inn i rapport |
 | **4** | Bredt utvalg byggeklosser | Se **«Standardbyggeklosser (rapport-hjelp)»** nedenfor | Kodet + assets `[repo]` delvis · utvid med screenshots |
 | **5** | KI-agenter | `ZombieAI` (FSM: Patrol/Chase/Attack/Dead) + `NavMeshAgent`; evt. `CivilianAI` | `[repo]` ✓ · NavMesh bakt i scene `[ ]` |
-| **6** | Startmeny, in-game GUI, keybinds | `MainMenuController`, `SceneLoader`, `HUDController`, `PauseMenu`, `CheatMenu` (Y), `MissionManager` + kompass; keybind-tekst i `SceneSetupTool` (generert UI, EN) | Kodet `[repo]` · verifiser synlig tekst i **dine** `.unity`-filer `[ ]` |
+| **6** | Startmeny, in-game GUI, keybinds | `MainMenuController`, `SceneLoader`, `HUDController`, `PauseMenu`, `CheatMenu` (Y), `MissionManager` + kompass | Kodet `[repo]` · verifiser tekst/keybinds i **dine** `.unity`-filer `[ ]` |
 | **7** | Rigg-animasjon | `ZombieAI` / spiller bruker `Animator` (Mecanim) — verifiser clips i **Inspector** på prefabs | `[repo]` referanser i kode · `[ ]` screenshot Animator |
 | **8** | Lyd | `AudioManager`, `GameAudioSettings` (ScriptableObject), `PlayerShooting`/`WeaponPickup` SFX, meny musikk | Kodet `[repo]` · clips tildelt `[ ]` Inspector |
 | **9** | .exe med Avslutt | `MainMenuController.OnQuitClicked`, `PauseMenu.OnQuitClicked`, `GameOverScreen`/`WinScreen` (via knapper i scene) | Kodet `[repo]` · **må testes i ferdig build** `[ ]` |
@@ -96,9 +90,8 @@ Alle er **enabled: 1**. Matcher `EKSAMEN_OPPSTART.md`.
 
 ## UI / språk (viktig før leveranse)
 
-- **In-game tekst** fra flere scripts er **engelsk** (f.eks. `WinScreen`, `GameOverScreen`, `HUDController`, `MissionObjectiveHUD`, polish-tool missions).
-- **`SceneSetupTool.cs`** (menyer som **opprettes på nytt** fra editor-menyen): knapper, keybind-hjelp, cheat-panel og fallback-tekster er satt til **engelsk** (2026-05-04).
-- **Eksisterende scener** som allerede har MainMenu/Pause/GameOver/Win: tekst endres **ikke** automatisk — oppdater manuelt i Inspector, eller kjør relevant «create/repair»-meny som bygger UI på nytt (backup først).
+- **In-game tekst** kan være engelsk eller norsk — velg **ett** språk konsekvent i rapport og UI der det er mulig.
+- **Eksisterende scener:** oppdater TMP-tekst i Inspector ved behov (ingen automatisk «repair»-meny i repo lenger).
 
 ---
 
@@ -124,7 +117,7 @@ Bruk listen i rapporten; eksempler her er basert på kode + typisk scene:
 
 ## Egne scripts — liste til rapport (runtime, 44 filer)
 
-Gruppert etter mappe; **lever ikke Editor-mappen** som «kjernespill» (kun som verktøy hvis du vil nevne det).
+Gruppert etter mappe. **Editor:** kun `GameSettingsWindow.cs` (innstillingshub) — ikke en del av `.exe`.
 
 ### Core (14)
 | Fil | Rolle (kort) |
@@ -194,8 +187,8 @@ Gruppert etter mappe; **lever ikke Editor-mappen** som «kjernespill» (kun som 
 | `BeachParkourMission.cs` | Strand-parkour (hvis i bruk) |
 | `AudioManager.cs` | Musikk/SFX-master |
 
-### Editor (17) — verktøy, ikke gameplay i .exe
-`GameplayPolishTool`, `SceneSetupTool`, `LevelSceneRepairTool`, `HierarchyLevelCleanupTool`, `EnvironmentArtSortTool`, `BuildSettingsLegacyCleanupTool`, `ProjectSetupTool`, `PlayerSetupTool`, `ThirdPartyFolderSetup`, `GameSettingsWindow`, `ZoneLevelAuthoring`, `Zone2CityMapBuilder`, `Zone3BeachMapBuilder`, `ZombieCartoonGameplayPrefabBuilder`, `CityCompassMarkerMenu`, `MissingScriptsCleanupTool`, `IslandTreeTerrainWarningFix`
+### Editor (1) — verktøy, ikke gameplay i .exe
+`GameSettingsWindow.cs` — **CartoonZombies → Settings** (lyd, bølger, prefab-felt, cheat-SO).
 
 ---
 
@@ -208,13 +201,14 @@ Zombier er **agenter** med **NavMesh pathfinding** (`NavMeshAgent`) og en **fini
 ## Viktige tekniske beslutninger (ikke glem)
 
 - **By-nivå:** ikke auto til strand etter siste bølge — `ZombieSpawner.loadNextSceneWhenAllWavesComplete` skal være **av** på by; progresjon via **ZoneTrigger** + oppdrag.
-- **Hierarchy:** mål `GameplaySystems` / `EnvironmentArt` (CartoonZombies → Organize / Fix).
-- **Polish:** `CartoonZombies → Fix → ★ FIX EVERYTHING` per level etter backup.
+- **Hierarchy:** mål `GameplaySystems` / `EnvironmentArt` (rydd manuelt ved behov).
+- **Polish:** test begge levels; NavMesh og spawn-punkter må være konsistente (se `EKSAMEN_OPPSTART.md`).
 
 ---
 
 ## Logg (nyeste øverst)
 
+- **2026-05-06** — **Leveranse-opprydding:** Fjernet `AI_HANDOFF.md`, `.agent/`-notater, og alle editor-scripts under `Assets/Scripts/Editor/` unntatt **`GameSettingsWindow.cs`**. Oppdatert `EKSAMEN_OPPSTART.md`, `PG2202_EDITOR_VERKTØY_KONTEKST.md`, README. Gameplay/runtime uendret; bruk manuelle Unity-steg for NavMesh og Build Settings.
 - **2026-05-04** — **Opprydding:** Alle `.md`-filer under prosjektet er samlet i **`Docs/`** (rot-README oppdatert). Slettet `Assets/_Recovery`, `Assets/Castle 1 LITE` og Unity-malen `Assets/Readme.asset`. Relative lenker til `Forelesningsmateriale/` og repo-README i denne filen og masterplan er justert (`../../../`). `.gitignore`: `Assets/_Recovery/`.
 - **2026-05-04** — **Editor-kontekst:** `PG2202_EDITOR_VERKTØY_KONTEKST.md` — tabell over hele **CartoonZombies**-menyen (Fix / Repair / Scenes / Organize / Project / Setup / Level Art / Settings), filnavn, og forskjell på FIX EVERYTHING vs Repair.
 - **2026-05-04** — **Utførelsesplan:** ny fil `PG2202_UTFØRELSESPLAN.md` (faser + hvem gjør hva). **GameplayPolishTool** oppgradert: FIX EVERYTHING inkl. `HierarchyLevelCleanupTool`, `FixCityZombieSpawnerAutoload`, **BoxCollider**-vegetasjon, **engelske** menyer/dialoger/missions, rettet «StrandSskog»-typo i feilmelding. README lenker til utførelsesplan.
@@ -245,4 +239,4 @@ Zombier er **agenter** med **NavMesh pathfinding** (`NavMeshAgent`) og en **fini
 
 ---
 
-_Sist oppdatert: 2026-05-04 (full gjennomgang utført i Cursor og skrevet inn i denne filen)._
+_Sist oppdatert: 2026-05-06._

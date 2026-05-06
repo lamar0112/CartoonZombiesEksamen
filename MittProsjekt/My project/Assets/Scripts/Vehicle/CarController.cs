@@ -7,12 +7,26 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class CarController : MonoBehaviour
 {
+    public enum DriveAxis
+    {
+        Auto,
+        Forward,
+        Right,
+        Up,
+    }
+
     [Header("Driving")]
     [Tooltip("Akselerasjon i m/s² (ForceMode.Acceleration — uavhengig av masse og friksjon).")]
     [SerializeField] private float motorForce  = 14f;   // m/s² akselerasjon — bytt ikke til 5600
     [SerializeField] private float brakeForce  = 3000f;
     [SerializeField] private float maxSteer    = 30f;   // maks svingvinkel i grader
     [SerializeField] private float maxSpeed    = 20f;   // maks hastighet m/s
+    [Tooltip("Hvilken lokal akse som peker 'fremover' for dette kjøretøyet. Bruk Auto hvis modellen er rotert/uvant.")]
+    [SerializeField] private DriveAxis driveAxis = DriveAxis.Auto;
+
+    [Header("Steering feel")]
+    [Tooltip("Hvor raskt kjøretøyet roterer i yaw når du svinger (høyere = mer responsivt).")]
+    [SerializeField] private float steerYawResponsiveness = 30f;
 
     [Header("Stabilitet")]
     [Tooltip("Ekstra nedover-kraft når noen kjører — holder hjulene bedre på bakken (PG2202-04 Rigidbody).")]
@@ -27,8 +41,14 @@ public class CarController : MonoBehaviour
     [SerializeField] private float aquaticMotorScale = 0.9f;
     [Tooltip("Minimum sving-faktor i lav fart — høyere = lettere å snu båten (var for lav).")]
     [SerializeField] private float aquaticMinSteerFactor = 0.52f;
+    [Tooltip("Ekstra yaw-respons for båt — gjør det lettere å svinge/rette opp kurs.")]
+    [SerializeField] private float aquaticSteerYawResponsiveness = 55f;
     [Tooltip("Andel av extraDownForceWhileDriving på båt (bil trenger mer «trykk» mot bakken).")]
     [Range(0f, 1f)] [SerializeField] private float aquaticExtraDownScale = 0.2f;
+    [Tooltip("Døsone på styring (unngår at små Input Manager-verdier gir konstant rotasjon / «sirkel-spinner»).")]
+    [SerializeField] private float aquaticSteerDeadZone = 0.12f;
+    [Tooltip("Når styring er innenfor døsonen: multipliser Y-angularVelocity med denne hver FixedUpdate (lavere = mer demping).")]
+    [Range(0.5f, 0.99f)] [SerializeField] private float aquaticYawDampingPerStep = 0.88f;
 
     [Header("Wheel transforms (visual only, not WheelCollider)")]
     [SerializeField] private Transform frontLeftWheel;
@@ -49,6 +69,8 @@ public class CarController : MonoBehaviour
     private float _motorScale = 1f;
     private float _downForceScale = 1f;
     private float _minSteerFactor = 0.22f;
+    private float _steerYaw = 30f;
+    private float _steerForPhysics;
 
     private void Awake()
     {
@@ -68,6 +90,7 @@ public class CarController : MonoBehaviour
         _motorScale     = 1f;
         _downForceScale = 1f;
         _minSteerFactor = 0.22f;
+        _steerYaw       = Mathf.Max(1f, steerYawResponsiveness);
 
         if (aquaticVehicle)
         {
@@ -75,6 +98,7 @@ public class CarController : MonoBehaviour
             _motorScale     = Mathf.Clamp(aquaticMotorScale, 0.35f, 1.25f);
             _downForceScale = Mathf.Clamp01(aquaticExtraDownScale);
             _minSteerFactor = Mathf.Clamp(aquaticMinSteerFactor, 0.22f, 1f);
+            _steerYaw       = Mathf.Max(_steerYaw, aquaticSteerYawResponsiveness);
             rb.angularDamping = Mathf.Max(rb.angularDamping, 4.5f);
             rb.linearDamping  = Mathf.Max(rb.linearDamping, 0.28f);
         }
@@ -104,6 +128,10 @@ public class CarController : MonoBehaviour
         }
         isBraking = Input.GetKey(KeyCode.Space);
 
+        _steerForPhysics = steerInput;
+        if (aquaticVehicle && Mathf.Abs(_steerForPhysics) < aquaticSteerDeadZone)
+            _steerForPhysics = 0f;
+
         if (_hasWheels) RotateWheels();
     }
 
@@ -119,6 +147,13 @@ public class CarController : MonoBehaviour
         ApplyBrake();
         ClampSpeed();
 
+        if (aquaticVehicle && Mathf.Abs(_steerForPhysics) < 0.02f)
+        {
+            Vector3 av = rb.angularVelocity;
+            av.y *= aquaticYawDampingPerStep;
+            rb.angularVelocity = av;
+        }
+
         if (extraDownForceWhileDriving > 0.01f)
             rb.AddForce(Vector3.down * (extraDownForceWhileDriving * _downForceScale), ForceMode.Acceleration);
     }
@@ -126,14 +161,46 @@ public class CarController : MonoBehaviour
     private void ApplyMotor()
     {
         if (Mathf.Abs(throttleInput) < 0.01f) return;
-        // Horisontal retning — skråstilt bil-mesh gir ofte forward med Y≠0 som «spiser» akselerasjon
-        Vector3 f = transform.forward;
-        f.y = 0f;
-        if (f.sqrMagnitude < 1e-6f) f = rb.transform.forward;
-        f.y = 0f;
-        if (f.sqrMagnitude < 1e-6f) return;
-        f.Normalize();
-        rb.AddForce(f * throttleInput * motorForce * _motorScale, ForceMode.Acceleration);
+        Vector3 dir = GetDriveDirectionOnXZ();
+        if (dir.sqrMagnitude < 1e-6f) return;
+        rb.AddForce(dir * throttleInput * motorForce * _motorScale, ForceMode.Acceleration);
+    }
+
+    private Vector3 GetDriveDirectionOnXZ()
+    {
+        Vector3 ProjectXZ(Vector3 v)
+        {
+            v.y = 0f;
+            return v;
+        }
+
+        Vector3 axis = driveAxis switch
+        {
+            DriveAxis.Forward => transform.forward,
+            DriveAxis.Right   => transform.right,
+            DriveAxis.Up      => transform.up,
+            _                 => Vector3.zero,
+        };
+
+        // Auto: velg den aksen som faktisk har tydelig XZ-komponent.
+        if (driveAxis == DriveAxis.Auto)
+        {
+            Vector3 f = ProjectXZ(transform.forward);
+            Vector3 r = ProjectXZ(transform.right);
+            Vector3 u = ProjectXZ(transform.up);
+
+            float f2 = f.sqrMagnitude;
+            float r2 = r.sqrMagnitude;
+            float u2 = u.sqrMagnitude;
+
+            axis = f2 >= r2 && f2 >= u2 ? transform.forward
+                : r2 >= u2              ? transform.right
+                :                         transform.up;
+        }
+
+        Vector3 planar = ProjectXZ(axis);
+        if (planar.sqrMagnitude < 1e-6f) return Vector3.zero;
+        return planar.normalized;
     }
 
     /// <summary>Ignorer kollisjon mellom alle bil-kollidere og alle zombie-kollidere (unngå at horden skyver bilen).</summary>
@@ -159,12 +226,15 @@ public class CarController : MonoBehaviour
 
     private void ApplySteering()
     {
+        float steer = aquaticVehicle ? _steerForPhysics : steerInput;
+        if (Mathf.Abs(steer) < 0.02f) return;
+
         // Roterer bilen basert på hastighet - svinger bedre ved høy fart
         float speed = rb.linearVelocity.magnitude;
         // Litt sving også i lav fart (ellers «låst» når man prøver å snu på stedet)
         float steerFactor = Mathf.Max(_minSteerFactor, Mathf.Clamp01(speed / 5f));
-        float steerAmount = steerInput * maxSteer * steerFactor;
-        rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, steerAmount * Time.fixedDeltaTime * 30f, 0f));
+        float steerAmount = steer * maxSteer * steerFactor;
+        rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, steerAmount * Time.fixedDeltaTime * _steerYaw, 0f));
     }
 
     private void ApplyBrake()

@@ -1,6 +1,6 @@
-# Oppstart etter opprydding — sjekkliste
+# Oppstart — sjekkliste (PG2202)
 
-Alle **PG2202**-notater (plan, logg, editor-meny) ligger i **`Docs/`** ved siden av denne filen — se **`INDEX.md`**.
+Alle **PG2202**-notater ligger i **`Docs/`** — se **`INDEX.md`**.
 
 Bruk denne etter at prosjektet er åpnet i Unity. Rekkefølge anbefalt.
 
@@ -13,60 +13,58 @@ Bruk denne etter at prosjektet er åpnet i Unity. Rekkefølge anbefalt.
 
 - **File → Build Settings**
 - Aktiver og dra rekkefølge: **MainMenu** → **Level01_By** → **Level02_StrandSkog** → **GameOver** → **Win**
-- Eventuelt: **CartoonZombies → Project → Strip legacy scenes from Build Settings**, deretter **CartoonZombies → Project → Add scenes to Build Settings**
+- Fjern gamle/demo-scener fra listen hvis de ikke skal leveres.
 
 ## 3. Lyd (GameAudioSettings)
 
 - Velg **Assets/ScriptableObjects/GameAudioSettings**
 - Sjekk at **Menu**, **City** (by), **Beach** (strand) har riktige AudioClip-referanser
-- **GameManager**-prefab (eller scene-objekt): **AudioManager** har `musicLibrary` satt til denne asseten
+- **GameManager**-prefab (eller scene-objekt): **AudioManager** har `musicLibrary` satt til denne asseten  
+- Valgfritt tuning: **CartoonZombies → Settings** (Editor-vindu)
 
 ## 4. Bølger (zombier)
 
 - **Assets/ScriptableObjects/Waves/** skal ha **WaveData_Zone2** (Level 1) og **WaveData_Zone3** (Level 2)
-- Etter **Repair** er spawner koblet automatisk; i **by** er **loadNextSceneWhenAllWavesComplete** satt **av** (scenebytte via **ZoneTrigger**).
+- I **by** skal **ZombieSpawner** ha **loadNextSceneWhenAllWavesComplete** = **av** (scenebytte via **ZoneTrigger** / oppdrag).
 
-## 5. ★ Automatisk reparasjon (gjør dette nå)
+## 5. NavMesh og scener (manuelt)
 
-- **CartoonZombies → Repair → 1 Repair BOTH level scenes (recommended)**  
-  Legger inn / fikser: **GameManager**-prefab, **EventSystem**, én aktiv sol + én hovedkamera, **SpawnPoints**, **ZombieSpawner** + **ZoneManager** + **WaveData**, **ZoneTrigger**-komponenter, **Player** fra prefab, **HUD** (bygges på nytt), Pause + Cheat, lyd + crosshair, **NavMesh**-bake for hele scenen, og rydder **Hierarchy** (**GameplaySystems** / **EnvironmentArt**). **MeshCollider** på mesh under **by-/strand-kartrot** (f.eks. **CityMap** / **BeachMap** eller eldre **CityMap_Zone2** / **BeachMap_Zone3** — se `LevelMapRootResolver`) og **EnvironmentArt** som mangler det, pluss usynlig **\_SafetyGround** under verden som siste sikkerhetsnett. Kun hierarchy-rydding (uten full repair): **CartoonZombies → Organize → 1 Cleanup hierarchy (active scene)**. Valgfritt etterpå: **2 / 3 Sort environment art** for undermapper (Roads, Nature, …). NavMesh-holder: **NavMeshWorldBake**.  
-  Oppretter **CityParkourManager** (by) og **BoatUnlockSystem** (strand) hvis de mangler.
+- Åpne hver level-scene og **Window → AI → Navigation** (eller prosjektets NavMesh Surface / **NavMeshWorldBake** hvis dere bruker det).
+- Marker walkable geometri som **Navigation Static** der det trengs; **ikke** bak vann om zombier skal unngå det.
+- **Bake** NavMesh. Flytt **SpawnPoints** slik at zombier spawner **på** det blå NavMesh (unngår «Failed to create agent»).
+- Sjekk at **GameplaySystems** / **EnvironmentArt** er fornuftig organisert (ingen krav om automatisk cleanup).
 
-- Mange gule **Missing (Script)** i Console (f.eks. FSP **Prop\_Pipe\_***) er tredjeparts-prefaber — kjør **CartoonZombies → Repair → 4 Remove missing scripts (active scene)** på en **backup-kopi** av scenen hvis du vil rydde (eller ignorer om spillet fungerer).
+## 6. Level01_By (by) — Inspector
 
-- **CartoonZombies → Repair → 3 Repair BOTH + sync Build Settings** gjør det samme som over **og** legger inn manglende scener i Build Settings (samme som tidligere «Fix alt i alle scener»).
-
-## 6. Level01_By (by) — manuelt i Inspector etter repair
-
-- **ZoneManager**: skal være **1** (repair setter det)
-- **CityParkourManager**: koble **beachZoneTrigger** (GameObject med **ZoneTrigger** som skal til strand)
+- **ZoneManager**: sone **1**
+- **CityParkourManager**: koble **beachZoneTrigger** (GameObject med **ZoneTrigger** mot strand)
 - **Myntene**: **CoinCollectable** med `parkourZoneId` 1 eller 2; teller må matche manager
 - **ZoneTrigger** (ut til strand): f.eks. **requireBothParkourZones** = true; ikke krev båt her
-- **NavMesh**: repair baker allerede; kjør **CartoonZombies → Scenes → Re-Bake NavMesh (active scene)** etter store kartendringer.
 
-## 7. Level02_StrandSkog (strand/skog) — manuelt
+## 7. Level02_StrandSkog (strand/skog) — Inspector
 
 - **ZoneManager**: `zoneNumber = 2`
-- **BoatUnlockSystem**: drap-krav, båt-trigger, lås-ikon
-- **IslandWinTrigger** på kisten → **Win**-scene (ikke **LoadNextZone** for seier)
-- **Ikke** bruk **ZoneTrigger** som «neste nivå» her med mindre du vil til en tredje scene (spillet er to nivåer + Win)
+- **BoatUnlockSystem**: drap-krav, båt-trigger, lås-ikon; på båt: **Car Controller** → huk av **Aquatic Vehicle**
+- **Island Win Trigger** på **Chest**-roten (eller eget trigger-objekt ved kiste) → kaller **Win** via `GameManager`
+- **Ikke** bruk **ZoneTrigger** som «neste nivå» her med mindre du vil til en tredje scene
 
 ## 8. Spilltest
 
-- **MainMenu → Play** → Level01_By → fullfør betingelser → Level02_StrandSkog → båt → kiste → Win
-- **Y**: cheat-meny (sensor/eksamen)
+- **MainMenu → Play** → Level01_By → fullfør betingelser → Level02_StrandSkog → båt → kiste → **Win**
+- **Y**: cheat-meny (anbefalt i oppgaven for sensor)
 
 ## 9. Ikke gjør (vanlig feil)
 
-- **Ikke** kjør **CartoonZombies → Level Art → ⚠ Rebuild procedural CITY/BEACH map** på ferdige scener uten Git-backup (sletter kartrot + **Environment**; nye bygg får **CityMap** / **BeachMap**, eldre **CityMap_Zone2** / **BeachMap_Zone3** ryddes også ved rebuild).
+- Slett ikke store mapper under **ThirdParty** / **Assets** uten å sjekke at ingen scene eller prefab refererer til dem.
+- Bygg ikke om hele kartet proceduralt uten backup hvis dere er fornøyde med nåværende level.
 
-## 10. Valgfritt: mindre prosjekt (ThirdParty)
+## 10. Mindre zip (valgfritt)
 
-Slett **kun** etter at du har commit/backup og har sjekket at ingen prefab i scenene peker dit:
+Slett **kun** etter backup og verifikasjon:
 
-- Demo-scener under pakker (f.eks. **TextMesh Pro / Examples & Extras**, **SimpleNaturePack/Scenes**, **castleDemo**)
+- Demo-scener under pakker (f.eks. **TextMesh Pro / Examples & Extras**, **SimpleNaturePack/Scenes**)
 - **ThirdParty/TutorialInfo** (Unity-intro, ikke spillet)
 
 ---
 
-_Fjernet i opprydding: ubrukt `ParticleManager`, `WaveData_Zone1`, `FloorStone_Zone1.mat`, kastell-editor-scripts, castle-greybox-meny, gamle Zone-scener._
+_Tidligere «CartoonZombies → Repair / Fix»-menyer er fjernet fra prosjektet; bruk denne sjekklisten og standard Unity-menyer._

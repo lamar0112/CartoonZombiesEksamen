@@ -34,7 +34,7 @@
 ### 3.1 Allerede adressert / kjent
 
 - **Fall gjennom kart:** mitigert med mesh-kollidere på kart + `_SafetyGround` + spawn-justering — **verifiser i Play** etter hver stor sceneendring.
-- **Missing Script (999+):** typisk **FSP** / tredjepart — ikke spill-KI; kan ryddes med Repair → Remove missing scripts (backup først).
+- **Missing Script (999+):** typisk **FSP** / tredjepart — ikke spill-KI; fjern manuelt i Inspector eller reimporter prefab (backup først).
 
 ### 3.2 Konfigurasjonsrisiko (Inspector)
 
